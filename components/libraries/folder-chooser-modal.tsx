@@ -90,8 +90,8 @@ export function FolderChooserModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-      <div className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#090c11] shadow-2xl">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm">
+      <div className="mx-auto flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#090c11] shadow-2xl">
         <div className="flex items-start justify-between border-b border-white/10 px-6 py-5">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-accent">Choose folder</p>
@@ -112,7 +112,7 @@ export function FolderChooserModal({
           </button>
         </div>
 
-        <div className="flex min-h-[420px] flex-1 flex-col px-6 py-5">
+        <div className="flex min-h-[420px] min-w-0 flex-1 flex-col px-6 py-5">
           <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Current selection</p>
             <p className="mt-2 break-all text-sm text-white">
@@ -163,7 +163,7 @@ export function FolderChooserModal({
             </button>
           </div>
 
-          <div className="mt-4 flex-1 overflow-hidden rounded-[28px] border border-white/10 bg-surface/80">
+          <div className="mt-4 min-h-0 flex-1 overflow-hidden rounded-[28px] border border-white/10 bg-surface/80">
             {loading ? (
               <div className="flex h-full items-center justify-center gap-3 text-slate-300">
                 <LoaderCircle className="h-5 w-5 animate-spin" />
@@ -181,7 +181,7 @@ export function FolderChooserModal({
                 </button>
               </div>
             ) : data?.mode === "roots" ? (
-              <div className="h-full overflow-y-auto p-3">
+              <div className="max-h-[52vh] overflow-y-auto p-3">
                 {data.roots.length === 0 ? (
                   <div className="flex h-full items-center justify-center px-6 text-center">
                     <p className="max-w-lg text-sm leading-7 text-slate-400">
@@ -213,7 +213,7 @@ export function FolderChooserModal({
                 )}
               </div>
             ) : data?.mode === "folder" ? (
-              <div className="h-full overflow-y-auto p-3">
+              <div className="max-h-[52vh] overflow-y-auto p-3">
                 <button
                   type="button"
                   onClick={() => setSelectedPath(data.currentPath)}

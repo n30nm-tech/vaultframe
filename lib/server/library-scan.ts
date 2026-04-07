@@ -123,30 +123,30 @@ async function collectVideoFiles(rootPath: string) {
     for (const entry of entries) {
       const fullPath = path.join(currentPath, entry.name);
 
-      if (entry.isDirectory()) {
-        queue.push(fullPath);
-        continue;
-      }
-
-      if (!entry.isFile()) {
-        continue;
-      }
-
-      const extension = path.extname(entry.name).toLowerCase();
-
-      if (!VIDEO_EXTENSIONS.has(extension)) {
-        continue;
-      }
-
       try {
-        const fileStats = await stat(fullPath);
+        const entryStats = await stat(fullPath);
+
+        if (entryStats.isDirectory()) {
+          queue.push(fullPath);
+          continue;
+        }
+
+        if (!entryStats.isFile()) {
+          continue;
+        }
+
+        const extension = path.extname(entry.name).toLowerCase();
+
+        if (!VIDEO_EXTENSIONS.has(extension)) {
+          continue;
+        }
 
         results.push({
           fullPath,
           folderPath: path.dirname(fullPath),
           fileName: entry.name,
           extension,
-          sizeBytes: typeof fileStats.size === "number" ? BigInt(fileStats.size) : null,
+          sizeBytes: typeof entryStats.size === "number" ? BigInt(entryStats.size) : null,
         });
       } catch {
         continue;
