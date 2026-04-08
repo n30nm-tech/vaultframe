@@ -1,6 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
+import { updateLibraryScanState } from "@/lib/data/libraries";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
 import { ensureThumbnailForVideo } from "@/lib/server/thumbnails";
 
@@ -17,8 +18,24 @@ export async function scanLibraryById(libraryId: string) {
 
   const libraryPath = await validateLibraryPath(library.path);
   const now = new Date();
-  const files = await collectVideoFiles(libraryPath);
+  await updateLibraryScanState(libraryId, {
+    scanStatus: "RUNNING",
+    scanStartedAt: now,
+    scanFinishedAt: null,
+    scanCurrentPath: libraryPath,
+    scanFilesScanned: 0,
+    scanVideosFound: 0,
+    scanError: null,
+  });
+
+  const files = await collectVideoFiles(libraryPath, async (currentPath, videosFound) => {
+    await updateLibraryScanState(libraryId, {
+      scanCurrentPath: currentPath,
+      scanVideosFound: videosFound,
+    });
+  });
   const seenPaths: string[] = [];
+  let processedCount = 0;
 
   for (const file of files) {
     seenPaths.push(file.fullPath);
@@ -52,6 +69,13 @@ export async function scanLibraryById(libraryId: string) {
         lastSeenAt: now,
       },
     });
+
+    processedCount += 1;
+    await updateLibraryScanState(libraryId, {
+      scanCurrentPath: file.fullPath,
+      scanFilesScanned: processedCount,
+      scanVideosFound: files.length,
+    });
   }
 
   if (seenPaths.length > 0) {
@@ -81,6 +105,12 @@ export async function scanLibraryById(libraryId: string) {
     where: { id: libraryId },
     data: {
       lastScannedAt: now,
+      scanStatus: "IDLE",
+      scanFinishedAt: new Date(),
+      scanCurrentPath: null,
+      scanFilesScanned: processedCount,
+      scanVideosFound: files.length,
+      scanError: null,
     },
   });
 
@@ -95,7 +125,24 @@ export async function scanLibraryById(libraryId: string) {
   };
 }
 
-async function collectVideoFiles(rootPath: string) {
+export function startLibraryScanInBackground(libraryId: string) {
+  void (async () => {
+    try {
+      await scanLibraryById(libraryId);
+    } catch (error) {
+      await updateLibraryScanState(libraryId, {
+        scanStatus: "FAILED",
+        scanFinishedAt: new Date(),
+        scanError: error instanceof Error ? error.message : "Scan failed.",
+      });
+    }
+  })();
+}
+
+async function collectVideoFiles(
+  rootPath: string,
+  onProgress?: (currentPath: string, videosFound: number) => Promise<void>,
+) {
   const results: Array<{
     fullPath: string;
     folderPath: string;
@@ -110,6 +157,10 @@ async function collectVideoFiles(rootPath: string) {
 
     if (!currentPath) {
       continue;
+    }
+
+    if (onProgress) {
+      await onProgress(currentPath, results.length);
     }
 
     let entries;
@@ -148,6 +199,10 @@ async function collectVideoFiles(rootPath: string) {
           extension,
           sizeBytes: typeof entryStats.size === "number" ? BigInt(entryStats.size) : null,
         });
+
+        if (onProgress) {
+          await onProgress(fullPath, results.length);
+        }
       } catch {
         continue;
       }

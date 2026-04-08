@@ -57,6 +57,25 @@ export async function toggleLibraryEnabled(id: string, enabled: boolean) {
   }
 }
 
+export async function updateLibraryScanState(
+  id: string,
+  data: {
+    scanStatus?: string;
+    scanStartedAt?: Date | null;
+    scanFinishedAt?: Date | null;
+    scanCurrentPath?: string | null;
+    scanFilesScanned?: number;
+    scanVideosFound?: number;
+    scanError?: string | null;
+    lastScannedAt?: Date | null;
+  },
+) {
+  return prisma.library.update({
+    where: { id },
+    data,
+  });
+}
+
 function mapLibraryError(error: unknown) {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&

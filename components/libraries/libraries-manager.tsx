@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FolderPlus, Sparkles } from "lucide-react";
 import type { Library } from "@prisma/client";
+import { useRouter } from "next/navigation";
 import { LibraryCard } from "@/components/libraries/library-card";
 import { LibraryFormSheet } from "@/components/libraries/library-form-sheet";
 
@@ -11,9 +12,25 @@ type LibrariesManagerProps = {
 };
 
 export function LibrariesManager({ libraries }: LibrariesManagerProps) {
+  const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedLibrary, setSelectedLibrary] = useState<Library | undefined>(undefined);
   const [sheetKey, setSheetKey] = useState(0);
+  const hasActiveScan = libraries.some((library) => library.scanStatus === "RUNNING");
+
+  useEffect(() => {
+    if (!hasActiveScan) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      router.refresh();
+    }, 2500);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [hasActiveScan, router]);
 
   const openCreate = () => {
     setSelectedLibrary(undefined);

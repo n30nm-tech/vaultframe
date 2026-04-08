@@ -8,7 +8,7 @@ import {
   updateLibrary,
 } from "@/lib/data/libraries";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
-import { isFolderBrowserError, scanLibraryById } from "@/lib/server/library-scan";
+import { isFolderBrowserError, startLibraryScanInBackground } from "@/lib/server/library-scan";
 
 export type LibraryActionState = {
   success: boolean;
@@ -131,12 +131,12 @@ export async function scanLibraryAction(
   }
 
   try {
-    const result = await scanLibraryById(id);
+    startLibraryScanInBackground(id);
     revalidatePath("/libraries");
 
     return {
       success: true,
-      message: `Scan complete. Found ${result.scannedCount} video${result.scannedCount === 1 ? "" : "s"} and marked ${result.missingCount} missing.`,
+      message: "Scan started. You can keep using the app while progress updates here.",
     };
   } catch (error) {
     return {
