@@ -174,13 +174,36 @@ async function resolvePathWithinAllowedRoots(requestedPath: string, configuredRo
 async function listSubdirectories(currentPath: string) {
   try {
     const entries = await readdir(currentPath, { withFileTypes: true });
+    const directories = await Promise.all(
+      entries.map(async (entry) => {
+        const entryPath = path.join(currentPath, entry.name);
 
-    return entries
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => ({
-        name: entry.name,
-        path: path.join(currentPath, entry.name),
-      }))
+        if (entry.isDirectory()) {
+          return {
+            name: entry.name,
+            path: entryPath,
+          };
+        }
+
+        try {
+          const entryStats = await stat(entryPath);
+
+          if (entryStats.isDirectory()) {
+            return {
+              name: entry.name,
+              path: entryPath,
+            };
+          }
+        } catch {
+          return null;
+        }
+
+        return null;
+      }),
+    );
+
+    return directories
+      .filter((entry): entry is { name: string; path: string } => Boolean(entry))
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch {
     throw new FolderBrowserError("This folder could not be read.", 500);
