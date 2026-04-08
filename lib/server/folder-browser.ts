@@ -173,30 +173,14 @@ async function resolvePathWithinAllowedRoots(requestedPath: string, configuredRo
 
 async function listSubdirectories(currentPath: string) {
   try {
-    const entries = await readdir(currentPath);
-    const directories = await Promise.all(
-      entries.map(async (entryName) => {
-        const entryPath = path.join(currentPath, entryName);
+    const entries = await readdir(currentPath, { withFileTypes: true });
 
-        try {
-          const entryStats = await stat(entryPath);
-
-          if (entryStats.isDirectory()) {
-            return {
-              name: entryName,
-              path: entryPath,
-            };
-          }
-        } catch {
-          return null;
-        }
-
-        return null;
-      }),
-    );
-
-    return directories
-      .filter((entry): entry is { name: string; path: string } => Boolean(entry))
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => ({
+        name: entry.name,
+        path: path.join(currentPath, entry.name),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch {
     throw new FolderBrowserError("This folder could not be read.", 500);
@@ -223,20 +207,6 @@ async function resolveExistingDirectory(
   try {
     stats = await stat(targetPath);
   } catch {
-    const parentPath = path.dirname(targetPath);
-    const entryName = path.basename(targetPath);
-
-    try {
-      const parentEntries = await readdir(parentPath, { withFileTypes: true });
-      const matchingEntry = parentEntries.find((entry) => entry.name === entryName);
-
-      if (matchingEntry && (!requireDirectory || matchingEntry.isDirectory())) {
-        return path.resolve(targetPath);
-      }
-    } catch {
-      // Fall through to the standard missing-folder error below.
-    }
-
     throw new FolderBrowserError(missingMessage, 404);
   }
 
@@ -247,7 +217,7 @@ async function resolveExistingDirectory(
   try {
     return await realpath(targetPath);
   } catch {
-    return path.resolve(targetPath);
+    throw new FolderBrowserError("Unable to resolve the requested folder.", 500);
   }
 }
 
