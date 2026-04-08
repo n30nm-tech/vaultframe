@@ -173,24 +173,17 @@ async function resolvePathWithinAllowedRoots(requestedPath: string, configuredRo
 
 async function listSubdirectories(currentPath: string) {
   try {
-    const entries = await readdir(currentPath, { withFileTypes: true });
+    const entries = await readdir(currentPath);
     const directories = await Promise.all(
-      entries.map(async (entry) => {
-        const entryPath = path.join(currentPath, entry.name);
-
-        if (entry.isDirectory()) {
-          return {
-            name: entry.name,
-            path: entryPath,
-          };
-        }
+      entries.map(async (entryName) => {
+        const entryPath = path.join(currentPath, entryName);
 
         try {
           const entryStats = await stat(entryPath);
 
           if (entryStats.isDirectory()) {
             return {
-              name: entry.name,
+              name: entryName,
               path: entryPath,
             };
           }
