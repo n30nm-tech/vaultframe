@@ -1,18 +1,35 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
+export type LibraryRecord = {
+  id: string;
+  name: string;
+  path: string;
+  enabled: boolean;
+  scanStatus: string;
+  scanStartedAt: Date | null;
+  scanFinishedAt: Date | null;
+  scanCurrentPath: string | null;
+  scanFilesScanned: number;
+  scanVideosFound: number;
+  scanError: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lastScannedAt: Date | null;
+};
+
 export type LibraryFormValues = {
   name: string;
   path: string;
   enabled: boolean;
 };
 
-export async function listLibraries() {
+export async function listLibraries(): Promise<LibraryRecord[]> {
   return prisma.library.findMany({
     orderBy: {
       createdAt: "desc",
     },
-  });
+  }) as Promise<LibraryRecord[]>;
 }
 
 export async function createLibrary(values: LibraryFormValues) {

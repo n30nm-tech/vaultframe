@@ -2,16 +2,16 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { FolderOpen, Pencil, X } from "lucide-react";
-import type { Library } from "@prisma/client";
 import {
   createLibraryAction,
   type LibraryActionState,
   updateLibraryAction,
 } from "@/app/libraries/actions";
 import { FolderChooserModal } from "@/components/libraries/folder-chooser-modal";
+import type { LibraryRecord } from "@/lib/data/libraries";
 
 type LibraryFormSheetProps = {
-  library?: Library;
+  library?: LibraryRecord;
   open: boolean;
   onClose: () => void;
 };

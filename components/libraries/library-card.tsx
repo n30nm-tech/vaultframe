@@ -3,13 +3,13 @@
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { CalendarDays, Folder, ScanSearch, Trash2 } from "lucide-react";
-import type { Library } from "@prisma/client";
 import { deleteLibraryAction, toggleLibraryEnabledAction } from "@/app/libraries/actions";
 import { ScanLibraryForm } from "@/components/libraries/scan-library-form";
+import type { LibraryRecord } from "@/lib/data/libraries";
 
 type LibraryCardProps = {
-  library: Library;
-  onEdit: (library: Library) => void;
+  library: LibraryRecord;
+  onEdit: (library: LibraryRecord) => void;
 };
 
 export function LibraryCard({ library, onEdit }: LibraryCardProps) {

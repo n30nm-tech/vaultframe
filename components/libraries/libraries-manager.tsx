@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { FolderPlus, Sparkles } from "lucide-react";
-import type { Library } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { LibraryCard } from "@/components/libraries/library-card";
 import { LibraryFormSheet } from "@/components/libraries/library-form-sheet";
+import type { LibraryRecord } from "@/lib/data/libraries";
 
 type LibrariesManagerProps = {
-  libraries: Library[];
+  libraries: LibraryRecord[];
 };
 
 export function LibrariesManager({ libraries }: LibrariesManagerProps) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [selectedLibrary, setSelectedLibrary] = useState<Library | undefined>(undefined);
+  const [selectedLibrary, setSelectedLibrary] = useState<LibraryRecord | undefined>(undefined);
   const [sheetKey, setSheetKey] = useState(0);
   const hasActiveScan = libraries.some((library) => library.scanStatus === "RUNNING");
 
@@ -38,7 +38,7 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
     setSheetOpen(true);
   };
 
-  const openEdit = (library: Library) => {
+  const openEdit = (library: LibraryRecord) => {
     setSelectedLibrary(library);
     setSheetKey((current) => current + 1);
     setSheetOpen(true);
