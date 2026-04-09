@@ -76,7 +76,7 @@ export function AppShell({ children }: PropsWithChildren) {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">{children}</main>
+          <main className="flex-1 px-4 py-5 pb-24 sm:px-6 sm:py-6 sm:pb-6 lg:px-8 lg:py-8">{children}</main>
         </div>
       </div>
 
@@ -108,6 +108,31 @@ export function AppShell({ children }: PropsWithChildren) {
           </div>
         </div>
       ) : null}
+
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#090c11]/95 px-2 py-2 backdrop-blur xl:hidden">
+        <div className="grid grid-cols-4 gap-2">
+          {navigationItems.map((item) => {
+            const isActive =
+              item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={clsx(
+                  "flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-medium transition",
+                  isActive
+                    ? "bg-accent/10 text-white"
+                    : "text-slate-400 hover:bg-white/[0.05] hover:text-white",
+                )}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{item.title}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
