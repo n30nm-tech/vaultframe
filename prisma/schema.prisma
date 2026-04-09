@@ -33,6 +33,7 @@ model MediaItem {
   fileName        String
   title           String?
   thumbnailPath   String?
+  storyboardPaths String[] @default([])
   extension       String
   sizeBytes       BigInt?
   durationSeconds Int?

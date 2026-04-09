@@ -1,0 +1,2 @@
+ALTER TABLE "MediaItem"
+ADD COLUMN "storyboardPaths" TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL;

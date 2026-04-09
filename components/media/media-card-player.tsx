@@ -21,6 +21,7 @@ type MediaCardPlayerProps = {
     id: string;
     title: string | null;
     thumbnailPath: string | null;
+    storyboardPaths: string[];
     fileName: string;
     folderPath: string;
     missing: boolean;
@@ -43,8 +44,25 @@ export function MediaCardPlayer({
   const isActive = activeMediaId === mediaItem.id;
   const [playerSize, setPlayerSize] = useState<PlayerSize>("small");
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [hoverFrameIndex, setHoverFrameIndex] = useState(0);
+  const [hoverPreviewActive, setHoverPreviewActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!hoverPreviewActive || mediaItem.storyboardPaths.length < 2 || isActive) {
+      setHoverFrameIndex(0);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setHoverFrameIndex((current) => (current + 1) % mediaItem.storyboardPaths.length);
+    }, 320);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [hoverPreviewActive, isActive, mediaItem.storyboardPaths]);
 
   useEffect(() => {
     if (!isActive && videoRef.current) {
@@ -61,10 +79,23 @@ export function MediaCardPlayer({
       : playerSize === "medium"
         ? "sm:col-span-2 xl:col-span-2"
         : "";
+  const previewImagePath =
+    hoverPreviewActive && mediaItem.storyboardPaths[hoverFrameIndex]
+      ? mediaItem.storyboardPaths[hoverFrameIndex]
+      : mediaItem.thumbnailPath || mediaItem.storyboardPaths[0] || null;
 
   return (
     <article
       className={`rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel transition sm:rounded-[28px] ${cardSpanClass}`}
+      onMouseEnter={() => {
+        if (!isActive && mediaItem.storyboardPaths.length > 1) {
+          setHoverPreviewActive(true);
+        }
+      }}
+      onMouseLeave={() => {
+        setHoverPreviewActive(false);
+        setHoverFrameIndex(0);
+      }}
     >
       <div
         ref={frameRef}
@@ -85,7 +116,7 @@ export function MediaCardPlayer({
                 setPlaybackError("This video could not be played.");
                 onDeactivate(mediaItem.id);
               }}
-              className="aspect-video w-full bg-black object-contain"
+              className="aspect-[4/5] max-h-[70vh] w-full bg-black object-contain sm:aspect-video sm:max-h-none"
             />
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-[#090c11] px-3 py-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -123,10 +154,10 @@ export function MediaCardPlayer({
               </div>
             </div>
           </div>
-        ) : mediaItem.thumbnailPath ? (
+        ) : previewImagePath ? (
           <div className="relative aspect-video">
             <Image
-              src={mediaItem.thumbnailPath}
+              src={previewImagePath}
               alt={mediaItem.title?.trim() || mediaItem.fileName}
               fill
               unoptimized
@@ -190,7 +221,13 @@ export function MediaCardPlayer({
         )}
 
         <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-500">
-          <span>{mediaItem.thumbnailPath ? "Poster ready" : "Poster pending"}</span>
+          <span>
+            {mediaItem.storyboardPaths.length > 0
+              ? `${mediaItem.storyboardPaths.length} preview frames`
+              : mediaItem.thumbnailPath
+                ? "Poster ready"
+                : "Poster pending"}
+          </span>
           <Link href={`/media/${mediaItem.id}`} className="transition hover:text-white">
             Details
           </Link>

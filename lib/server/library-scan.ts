@@ -3,7 +3,7 @@ import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { updateLibraryScanState } from "@/lib/data/libraries";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
-import { ensureThumbnailForVideo } from "@/lib/server/thumbnails";
+import { ensureStoryboardForVideo, ensureThumbnailForVideo } from "@/lib/server/thumbnails";
 
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mkv", ".avi", ".mov", ".wmv", ".webm", ".m4v"]);
 
@@ -40,6 +40,7 @@ export async function scanLibraryById(libraryId: string) {
   for (const file of files) {
     seenPaths.push(file.fullPath);
     const thumbnailPath = await ensureThumbnailForVideo(file.fullPath);
+    const storyboardPaths = await ensureStoryboardForVideo(file.fullPath);
 
     await prisma.mediaItem.upsert({
       where: {
@@ -52,6 +53,7 @@ export async function scanLibraryById(libraryId: string) {
         fileName: file.fileName,
         title: null,
         thumbnailPath,
+        storyboardPaths,
         extension: file.extension,
         sizeBytes: file.sizeBytes,
         durationSeconds: null,
@@ -63,6 +65,7 @@ export async function scanLibraryById(libraryId: string) {
         folderPath: file.folderPath,
         fileName: file.fileName,
         thumbnailPath: thumbnailPath ?? undefined,
+        storyboardPaths,
         extension: file.extension,
         sizeBytes: file.sizeBytes,
         missing: false,

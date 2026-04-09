@@ -53,6 +53,30 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
               </div>
             </div>
           )}
+
+          {mediaItem.storyboardPaths.length > 0 ? (
+            <div className="border-t border-white/10 px-4 py-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Storyboard Preview
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {mediaItem.storyboardPaths.map((storyboardPath, index) => (
+                  <div
+                    key={storyboardPath}
+                    className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black/30"
+                  >
+                    <Image
+                      src={storyboardPath}
+                      alt={`${mediaItem.title?.trim() || mediaItem.fileName} frame ${index + 1}`}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-panel">
