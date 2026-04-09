@@ -47,14 +47,15 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-black/50 backdrop-blur-sm">
-      <div className="flex h-full w-full max-w-xl flex-col border-l border-white/10 bg-[#0a0d12] shadow-2xl">
-        <div className="flex items-start justify-between border-b border-white/10 px-6 py-5">
+    <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
+      <div className="flex h-full justify-end sm:p-4">
+        <div className="flex h-full w-full flex-col bg-[#0a0d12] shadow-2xl sm:max-w-xl sm:rounded-[32px] sm:border sm:border-white/10 sm:shadow-panel">
+        <div className="flex items-start justify-between border-b border-white/10 px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-accent">
               {isEditing ? "Edit library" : "Add library"}
             </p>
-            <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+            <h3 className="mt-2 text-xl font-semibold tracking-tight text-white sm:text-2xl">
               {isEditing ? "Update saved library" : "Save a new library"}
             </h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">
@@ -71,7 +72,7 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
           </button>
         </div>
 
-        <form action={formAction} className="flex flex-1 flex-col px-6 py-6">
+        <form action={formAction} className="flex flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           {isEditing ? <input type="hidden" name="id" value={library?.id} /> : null}
           <input type="hidden" name="enabled" value={String(enabled)} />
 
@@ -85,7 +86,7 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
             />
 
             <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-200">Library folder</p>
                   <p className="mt-1 text-sm leading-6 text-slate-400">
@@ -95,7 +96,7 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
                 <button
                   type="button"
                   onClick={() => setChooserOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong sm:w-auto"
                 >
                   <FolderOpen className="h-4 w-4" />
                   Choose Folder
@@ -115,7 +116,7 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
                 />
               </label>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
                   Manual editing is available as an advanced fallback.
                 </p>
@@ -170,7 +171,7 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
             </div>
           ) : null}
 
-          <div className="mt-auto flex items-center justify-end gap-3 border-t border-white/10 pt-6">
+          <div className="mt-6 flex flex-col-reverse gap-3 border-t border-white/10 pt-6 sm:mt-auto sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -187,6 +188,7 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
             </button>
           </div>
         </form>
+        </div>
       </div>
 
       <FolderChooserModal

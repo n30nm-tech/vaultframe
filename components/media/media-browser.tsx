@@ -44,14 +44,14 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
         />
       ) : (
         <>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-400">
               Showing <span className="font-medium text-white">{data.filteredCount}</span> of{" "}
               <span className="font-medium text-white">{data.totalCount}</span> media items
             </p>
           </div>
 
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {data.mediaItems.map((mediaItem) => (
               <MediaCardPlayer
                 key={mediaItem.id}
@@ -80,7 +80,7 @@ function EmptyState({
   icon: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[32px] border border-dashed border-white/15 bg-white/[0.02] px-8 py-16 text-center">
+    <section className="rounded-[28px] border border-dashed border-white/15 bg-white/[0.02] px-5 py-12 text-center sm:rounded-[32px] sm:px-8 sm:py-16">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-accent/10 text-accent">
         {icon}
       </div>

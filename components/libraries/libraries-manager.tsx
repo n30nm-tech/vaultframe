@@ -51,10 +51,10 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
 
   return (
     <>
-      <section className="flex flex-wrap items-end justify-between gap-4 rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-panel">
+      <section className="flex flex-col gap-5 rounded-[28px] border border-white/10 bg-surface/80 p-5 shadow-panel sm:rounded-[32px] sm:p-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.24em] text-accent">Saved libraries</p>
-          <h3 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+          <h3 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             Persistent media roots
           </h3>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
@@ -65,7 +65,7 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong sm:w-auto"
         >
           <FolderPlus className="h-4 w-4" />
           Add Library
@@ -73,7 +73,7 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
       </section>
 
       {libraries.length === 0 ? (
-        <section className="mt-6 rounded-[32px] border border-dashed border-white/15 bg-white/[0.02] px-8 py-16 text-center">
+        <section className="mt-6 rounded-[28px] border border-dashed border-white/15 bg-white/[0.02] px-5 py-12 text-center sm:rounded-[32px] sm:px-8 sm:py-16">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-accent/10 text-accent">
             <Sparkles className="h-7 w-7" />
           </div>
@@ -86,7 +86,7 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
           <button
             type="button"
             onClick={openCreate}
-            className="mt-8 inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-medium text-white transition hover:bg-white/[0.08]"
+            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-medium text-white transition hover:bg-white/[0.08] sm:w-auto"
           >
             <FolderPlus className="h-4 w-4" />
             Add your first library

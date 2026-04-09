@@ -90,12 +90,13 @@ export function FolderChooserModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm">
-      <div className="mx-auto flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#090c11] shadow-2xl">
-        <div className="flex items-start justify-between border-b border-white/10 px-6 py-5">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm">
+      <div className="mx-auto flex min-h-screen w-full items-stretch px-0 py-0 sm:min-h-0 sm:max-w-4xl sm:items-center sm:px-4 sm:py-6">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-[#090c11] shadow-2xl sm:max-h-[88vh] sm:rounded-[32px] sm:border sm:border-white/10">
+        <div className="flex items-start justify-between border-b border-white/10 px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-accent">Choose folder</p>
-            <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+            <h3 className="mt-2 text-xl font-semibold tracking-tight text-white sm:text-2xl">
               Browse allowed server directories
             </h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">
@@ -112,7 +113,7 @@ export function FolderChooserModal({
           </button>
         </div>
 
-        <div className="flex min-h-[420px] min-w-0 flex-1 flex-col px-6 py-5">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-4 sm:min-h-[420px] sm:px-6 sm:py-5">
           <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Current selection</p>
             <p className="mt-2 break-all text-sm text-white">
@@ -136,7 +137,7 @@ export function FolderChooserModal({
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={() =>
@@ -163,7 +164,7 @@ export function FolderChooserModal({
             </button>
           </div>
 
-          <div className="mt-4 min-h-0 flex-1 overflow-hidden rounded-[28px] border border-white/10 bg-surface/80">
+          <div className="mt-4 min-h-0 flex-1 overflow-hidden rounded-[24px] border border-white/10 bg-surface/80 sm:rounded-[28px]">
             {loading ? (
               <div className="flex h-full items-center justify-center gap-3 text-slate-300">
                 <LoaderCircle className="h-5 w-5 animate-spin" />
@@ -181,7 +182,7 @@ export function FolderChooserModal({
                 </button>
               </div>
             ) : data?.mode === "roots" ? (
-              <div className="max-h-[52vh] overflow-y-auto p-3">
+              <div className="h-full overflow-y-auto p-3">
                 {data.roots.length === 0 ? (
                   <div className="flex h-full items-center justify-center px-6 text-center">
                     <p className="max-w-lg text-sm leading-7 text-slate-400">
@@ -213,7 +214,7 @@ export function FolderChooserModal({
                 )}
               </div>
             ) : data?.mode === "folder" ? (
-              <div className="max-h-[52vh] overflow-y-auto p-3">
+              <div className="h-full overflow-y-auto p-3">
                 <button
                   type="button"
                   onClick={() => setSelectedPath(data.currentPath)}
@@ -263,7 +264,7 @@ export function FolderChooserModal({
                         <button
                           type="button"
                           onClick={() => setRequestPath(folder.path)}
-                          className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-200 transition hover:bg-white/[0.06] hover:text-white"
+                          className="shrink-0 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-200 transition hover:bg-white/[0.06] hover:text-white"
                         >
                           Open
                         </button>
@@ -276,11 +277,11 @@ export function FolderChooserModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-white/10 px-6 py-5">
-          <p className="text-sm text-slate-400">
+        <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-4 sm:px-6 sm:py-5 lg:flex-row lg:items-center lg:justify-between">
+          <p className="min-w-0 text-sm text-slate-400">
             {selectedPath ? `Selected: ${selectedPath}` : "Select the current folder or a highlighted child folder."}
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
             <button
               type="button"
               onClick={onClose}
@@ -303,6 +304,7 @@ export function FolderChooserModal({
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

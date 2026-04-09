@@ -14,11 +14,11 @@ type LibraryCardProps = {
 
 export function LibraryCard({ library, onEdit }: LibraryCardProps) {
   return (
-    <article className="rounded-[28px] border border-white/10 bg-surface/80 p-6 shadow-panel">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <article className="rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[28px] sm:p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="text-xl font-semibold tracking-tight text-white">{library.name}</h3>
+            <h3 className="text-lg font-semibold tracking-tight text-white sm:text-xl">{library.name}</h3>
             <span
               className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
                 library.enabled
@@ -35,7 +35,7 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <ScanLibraryForm libraryId={library.id} />
           <button
             type="button"

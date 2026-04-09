@@ -25,8 +25,8 @@ export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarPr
     filters.sort !== "updated-desc";
 
   return (
-    <form className="rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-panel">
-      <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
+    <form className="rounded-[28px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[32px] sm:p-6">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
         <Field label="Search">
           <input
             name="search"
@@ -92,14 +92,14 @@ export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarPr
         </Field>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p className="text-sm text-slate-400">
           {hasActiveFilters ? "Filters applied to the current media library view." : "Filter scanned media records stored in PostgreSQL."}
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <Link
             href="/media"
-            className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/[0.04] hover:text-white"
+            className="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-medium text-slate-300 transition hover:bg-white/[0.04] hover:text-white"
           >
             Reset
           </Link>

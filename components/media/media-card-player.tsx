@@ -64,7 +64,7 @@ export function MediaCardPlayer({
 
   return (
     <article
-      className={`rounded-[28px] border border-white/10 bg-surface/80 p-4 shadow-panel transition ${cardSpanClass}`}
+      className={`rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel transition sm:rounded-[28px] ${cardSpanClass}`}
     >
       <div
         ref={frameRef}
@@ -142,9 +142,9 @@ export function MediaCardPlayer({
         )}
       </div>
 
-      <div className="mt-4 flex items-start justify-between gap-3">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="truncate text-lg font-semibold tracking-tight text-white">
+          <h3 className="truncate text-base font-semibold tracking-tight text-white sm:text-lg">
             {mediaItem.title?.trim() || mediaItem.fileName}
           </h3>
           <p className="mt-2 truncate text-sm text-slate-400">{mediaItem.fileName}</p>
@@ -170,7 +170,7 @@ export function MediaCardPlayer({
 
       {playbackError ? <p className="mt-3 text-sm text-rose-300">{playbackError}</p> : null}
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+      <div className="mt-4 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
         {mediaItem.missing ? (
           <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs uppercase tracking-[0.16em] text-slate-500">
             Playback unavailable
@@ -189,7 +189,7 @@ export function MediaCardPlayer({
           </button>
         )}
 
-        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-500">
+        <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-500">
           <span>{mediaItem.thumbnailPath ? "Poster ready" : "Poster pending"}</span>
           <Link href={`/media/${mediaItem.id}`} className="transition hover:text-white">
             Details
