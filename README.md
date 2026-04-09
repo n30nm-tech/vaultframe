@@ -1,6 +1,6 @@
-# VaultFrame
+# VaultFrame v2
 
-Self-hosted media library app built with Next.js, TypeScript, Tailwind, Prisma, PostgreSQL, and Docker Compose.
+VaultFrame v2 is a self-hosted media library app built with Next.js, TypeScript, Tailwind, Prisma, PostgreSQL, and Docker Compose.
 
 ## What It Does
 

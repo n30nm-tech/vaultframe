@@ -39,9 +39,14 @@ export function AppShell({ children }: PropsWithChildren) {
                   <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500 sm:text-sm">
                     Media Library
                   </p>
-                  <h1 className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
-                    VaultFrame control center
-                  </h1>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h1 className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
+                      VaultFrame control center
+                    </h1>
+                    <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent sm:text-[11px]">
+                      v2
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -91,7 +96,12 @@ export function AppShell({ children }: PropsWithChildren) {
           <div className="relative h-full w-[88vw] max-w-sm border-r border-white/10 bg-[#090c11] px-5 py-5 shadow-2xl">
             <div className="mb-6 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-lg font-semibold tracking-tight text-white">VaultFrame</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-semibold tracking-tight text-white">VaultFrame</p>
+                  <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
+                    v2
+                  </span>
+                </div>
                 <p className="text-sm text-slate-400">Self-hosted media library</p>
               </div>
               <button
@@ -145,7 +155,12 @@ function ShellNav({ pathname }: { pathname: string }) {
           <Film className="h-6 w-6" />
         </div>
         <div>
-          <p className="text-lg font-semibold tracking-tight">VaultFrame</p>
+          <div className="flex items-center gap-2">
+            <p className="text-lg font-semibold tracking-tight">VaultFrame</p>
+            <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
+              v2
+            </span>
+          </div>
           <p className="text-sm text-slate-400">Self-hosted media library</p>
         </div>
       </Link>
