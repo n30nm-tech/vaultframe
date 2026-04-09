@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import clsx from "clsx";
 import {
   Expand,
   Film,
@@ -97,9 +98,13 @@ export function MediaCardPlayer({
         setHoverFrameIndex(0);
       }}
     >
+      <div className={clsx(isActive ? "space-y-4" : "flex items-start gap-3 sm:block")}>
       <div
         ref={frameRef}
-        className="overflow-hidden rounded-[24px] border border-white/10 bg-black/40"
+        className={clsx(
+          "overflow-hidden rounded-[24px] border border-white/10 bg-black/40",
+          isActive ? "" : "w-36 shrink-0 sm:w-auto",
+        )}
       >
         {isActive && !mediaItem.missing ? (
           <div className="relative">
@@ -116,7 +121,7 @@ export function MediaCardPlayer({
                 setPlaybackError("This video could not be played.");
                 onDeactivate(mediaItem.id);
               }}
-              className="aspect-[4/5] max-h-[70vh] w-full bg-black object-contain sm:aspect-video sm:max-h-none"
+              className="aspect-[16/10] max-h-[42vh] w-full bg-black object-contain sm:aspect-video sm:max-h-none"
             />
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-[#090c11] px-3 py-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -155,7 +160,7 @@ export function MediaCardPlayer({
             </div>
           </div>
         ) : previewImagePath ? (
-          <div className="relative aspect-video">
+          <div className="relative h-24 w-full sm:h-auto sm:aspect-video">
             <Image
               src={previewImagePath}
               alt={mediaItem.title?.trim() || mediaItem.fileName}
@@ -165,20 +170,23 @@ export function MediaCardPlayer({
             />
           </div>
         ) : (
-          <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
-            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent/10 text-accent">
-              <Film className="h-8 w-8" />
+          <div className="flex h-24 items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02] sm:h-auto sm:aspect-video">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent sm:h-16 sm:w-16 sm:rounded-3xl">
+              <Film className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
           </div>
         )}
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className={clsx("min-w-0 flex-1", isActive ? "" : "sm:mt-4")}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold tracking-tight text-white sm:text-lg">
+          <h3 className="break-words text-sm font-semibold tracking-tight text-white sm:text-lg">
             {mediaItem.title?.trim() || mediaItem.fileName}
           </h3>
-          <p className="mt-2 truncate text-sm text-slate-400">{mediaItem.fileName}</p>
+          <p className="mt-1 break-words text-xs text-slate-400 sm:mt-2 sm:text-sm">
+            {mediaItem.fileName}
+          </p>
         </div>
         {mediaItem.missing ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">
@@ -188,7 +196,7 @@ export function MediaCardPlayer({
         ) : null}
       </div>
 
-      <div className="mt-4 space-y-3 text-sm text-slate-400">
+      <div className="mt-3 space-y-2 text-xs text-slate-400 sm:mt-4 sm:space-y-3 sm:text-sm">
         <div className="flex items-center gap-2">
           <HardDrive className="h-4 w-4 shrink-0" />
           <span className="truncate">{mediaItem.library.name}</span>
@@ -201,7 +209,7 @@ export function MediaCardPlayer({
 
       {playbackError ? <p className="mt-3 text-sm text-rose-300">{playbackError}</p> : null}
 
-      <div className="mt-4 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3 sm:mt-4 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
         {mediaItem.missing ? (
           <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs uppercase tracking-[0.16em] text-slate-500">
             Playback unavailable
@@ -232,6 +240,8 @@ export function MediaCardPlayer({
             Details
           </Link>
         </div>
+      </div>
+      </div>
       </div>
     </article>
   );
