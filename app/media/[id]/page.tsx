@@ -31,27 +31,37 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
       <PageHeader
         eyebrow="Media"
         title={mediaItem.title?.trim() || mediaItem.fileName}
-        description="Thumbnail preview and basic metadata are available here. Playback is not part of this phase."
+        description="Play the media, review storyboard frames, and inspect the stored record details."
       />
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-surface/80 shadow-panel">
-          {mediaItem.thumbnailPath ? (
-            <div className="relative aspect-video">
-              <Image
-                src={mediaItem.thumbnailPath}
-                alt={mediaItem.title?.trim() || mediaItem.fileName}
-                fill
-                unoptimized
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
-              <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-accent/10 text-accent">
-                <Film className="h-10 w-10" />
+          {mediaItem.missing ? (
+            mediaItem.thumbnailPath ? (
+              <div className="relative aspect-video">
+                <Image
+                  src={mediaItem.thumbnailPath}
+                  alt={mediaItem.title?.trim() || mediaItem.fileName}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
               </div>
-            </div>
+            ) : (
+              <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
+                <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-accent/10 text-accent">
+                  <Film className="h-10 w-10" />
+                </div>
+              </div>
+            )
+          ) : (
+            <video
+              src={`/api/media/${mediaItem.id}`}
+              poster={mediaItem.thumbnailPath ?? undefined}
+              controls
+              playsInline
+              className="aspect-video w-full bg-black object-contain"
+            />
           )}
 
           {mediaItem.storyboardPaths.length > 0 ? (
