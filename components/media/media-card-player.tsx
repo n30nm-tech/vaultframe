@@ -87,7 +87,6 @@ export function MediaCardPlayer({
       ? mediaItem.storyboardPaths[hoverFrameIndex]
       : mediaItem.thumbnailPath || mediaItem.storyboardPaths[0] || null;
   const canPreviewStoryboard = !isActive && mediaItem.storyboardPaths.length > 1;
-  const previewHint = hoverPreviewActive ? "Previewing" : "Tap preview";
 
   const handlePreviewToggle = () => {
     if (!canPreviewStoryboard) {
@@ -209,11 +208,7 @@ export function MediaCardPlayer({
               className="object-cover"
             />
             {canPreviewStoryboard ? (
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white sm:text-xs">
-                <span className="hidden sm:inline">
-                  {hoverPreviewActive ? "Previewing frames" : "Hover to preview"}
-                </span>
-                <span className="sm:hidden">{previewHint}</span>
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-end bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white sm:text-xs">
                 <span>{mediaItem.storyboardPaths.length} frames</span>
               </div>
             ) : null}
