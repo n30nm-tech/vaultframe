@@ -75,7 +75,9 @@ export function MediaCardPlayer({
   }, [isActive]);
 
   const cardSpanClass =
-    playerSize === "large"
+    !isActive
+      ? ""
+      : playerSize === "large"
       ? "sm:col-span-2 xl:col-span-3 2xl:col-span-4"
       : playerSize === "medium"
         ? "sm:col-span-2 xl:col-span-2"
@@ -94,6 +96,16 @@ export function MediaCardPlayer({
 
     setHoverPreviewActive((current) => !current);
     setHoverFrameIndex(0);
+  };
+
+  const handleDeactivate = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      videoRef.current.load();
+    }
+    setPlayerSize("small");
+    onDeactivate(mediaItem.id);
   };
 
   return (
@@ -129,10 +141,10 @@ export function MediaCardPlayer({
               autoPlay
               playsInline
               onPlay={() => onActivate(mediaItem.id)}
-              onEnded={() => onDeactivate(mediaItem.id)}
+              onEnded={handleDeactivate}
               onError={() => {
                 setPlaybackError("This video could not be played.");
-                onDeactivate(mediaItem.id);
+                handleDeactivate();
               }}
               className="aspect-[16/10] max-h-[42vh] w-full bg-black object-contain sm:aspect-video sm:max-h-none"
             />
@@ -163,11 +175,11 @@ export function MediaCardPlayer({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onDeactivate(mediaItem.id)}
+                  onClick={handleDeactivate}
                   className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/[0.08] hover:text-white"
                 >
                   <Shrink className="h-3.5 w-3.5" />
-                  Close
+                  Stop
                 </button>
               </div>
             </div>
@@ -218,11 +230,8 @@ export function MediaCardPlayer({
       <div className={clsx("min-w-0 flex-1", isActive ? "" : "sm:mt-4")}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="break-words text-sm font-semibold tracking-tight text-white sm:text-lg">
+          <p className="break-words text-xs text-slate-400 sm:text-sm">
             {mediaItem.title?.trim() || mediaItem.fileName}
-          </h3>
-          <p className="mt-1 break-words text-xs text-slate-400 sm:mt-2 sm:text-sm">
-            {mediaItem.fileName}
           </p>
         </div>
         {mediaItem.missing ? (
@@ -256,12 +265,17 @@ export function MediaCardPlayer({
             type="button"
             onClick={() => {
               setPlaybackError(null);
+              if (isActive) {
+                handleDeactivate();
+                return;
+              }
+
               onActivate(mediaItem.id);
             }}
             className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong"
           >
             {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {isActive ? "Playing" : "Play"}
+            {isActive ? "Stop" : "Play"}
           </button>
         )}
 
