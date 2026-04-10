@@ -84,19 +84,21 @@ export function MediaCardPlayer({
     hoverPreviewActive && mediaItem.storyboardPaths[hoverFrameIndex]
       ? mediaItem.storyboardPaths[hoverFrameIndex]
       : mediaItem.thumbnailPath || mediaItem.storyboardPaths[0] || null;
+  const canPreviewStoryboard = !isActive && mediaItem.storyboardPaths.length > 1;
+  const previewHint = hoverPreviewActive ? "Previewing" : "Tap preview";
+
+  const handlePreviewToggle = () => {
+    if (!canPreviewStoryboard) {
+      return;
+    }
+
+    setHoverPreviewActive((current) => !current);
+    setHoverFrameIndex(0);
+  };
 
   return (
     <article
       className={`rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel transition sm:rounded-[28px] ${cardSpanClass}`}
-      onMouseEnter={() => {
-        if (!isActive && mediaItem.storyboardPaths.length > 1) {
-          setHoverPreviewActive(true);
-        }
-      }}
-      onMouseLeave={() => {
-        setHoverPreviewActive(false);
-        setHoverFrameIndex(0);
-      }}
     >
       <div className={clsx(isActive ? "space-y-4" : "flex items-start gap-3 sm:block")}>
       <div
@@ -105,6 +107,17 @@ export function MediaCardPlayer({
           "overflow-hidden rounded-[24px] border border-white/10 bg-black/40",
           isActive ? "" : "w-36 shrink-0 sm:w-auto",
         )}
+        onMouseEnter={() => {
+          if (canPreviewStoryboard) {
+            setHoverPreviewActive(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (canPreviewStoryboard) {
+            setHoverPreviewActive(false);
+            setHoverFrameIndex(0);
+          }
+        }}
       >
         {isActive && !mediaItem.missing ? (
           <div className="relative">
@@ -160,7 +173,22 @@ export function MediaCardPlayer({
             </div>
           </div>
         ) : previewImagePath ? (
-          <div className="relative h-24 w-full sm:h-auto sm:aspect-video">
+          <button
+            type="button"
+            onClick={handlePreviewToggle}
+            disabled={!canPreviewStoryboard}
+            className={clsx(
+              "relative block h-24 w-full text-left sm:h-auto sm:aspect-video",
+              canPreviewStoryboard ? "cursor-pointer" : "cursor-default",
+            )}
+            aria-label={
+              canPreviewStoryboard
+                ? hoverPreviewActive
+                  ? "Stop storyboard preview"
+                  : "Start storyboard preview"
+                : "Poster preview"
+            }
+          >
             <Image
               src={previewImagePath}
               alt={mediaItem.title?.trim() || mediaItem.fileName}
@@ -168,7 +196,16 @@ export function MediaCardPlayer({
               unoptimized
               className="object-cover"
             />
-          </div>
+            {canPreviewStoryboard ? (
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white sm:text-xs">
+                <span className="hidden sm:inline">
+                  {hoverPreviewActive ? "Previewing frames" : "Hover to preview"}
+                </span>
+                <span className="sm:hidden">{previewHint}</span>
+                <span>{mediaItem.storyboardPaths.length} frames</span>
+              </div>
+            ) : null}
+          </button>
         ) : (
           <div className="flex h-24 items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02] sm:h-auto sm:aspect-video">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent sm:h-16 sm:w-16 sm:rounded-3xl">
