@@ -40,37 +40,46 @@ export async function scanLibraryById(libraryId: string) {
   for (const file of files) {
     seenPaths.push(file.fullPath);
     const thumbnailPath = await ensureThumbnailForVideo(file.fullPath);
-    const storyboardPaths = await ensureStoryboardForVideo(file.fullPath);
+    const storyboard = await ensureStoryboardForVideo(file.fullPath);
+    const storyboardPaths = storyboard.frames.map((frame) => frame.path);
+    const storyboardTimestamps = storyboard.frames.map((frame) => frame.timestamp);
+
+    const createData: Record<string, unknown> = {
+      libraryId: library.id,
+      fullPath: file.fullPath,
+      folderPath: file.folderPath,
+      fileName: file.fileName,
+      title: null,
+      thumbnailPath,
+      storyboardPaths,
+      storyboardTimestamps,
+      extension: file.extension,
+      sizeBytes: file.sizeBytes,
+      durationSeconds: storyboard.durationSeconds,
+      missing: false,
+      lastSeenAt: now,
+    };
+
+    const updateData: Record<string, unknown> = {
+      libraryId: library.id,
+      folderPath: file.folderPath,
+      fileName: file.fileName,
+      thumbnailPath: thumbnailPath ?? undefined,
+      storyboardPaths,
+      storyboardTimestamps,
+      extension: file.extension,
+      sizeBytes: file.sizeBytes,
+      durationSeconds: storyboard.durationSeconds ?? undefined,
+      missing: false,
+      lastSeenAt: now,
+    };
 
     await prisma.mediaItem.upsert({
       where: {
         fullPath: file.fullPath,
       },
-      create: {
-        libraryId: library.id,
-        fullPath: file.fullPath,
-        folderPath: file.folderPath,
-        fileName: file.fileName,
-        title: null,
-        thumbnailPath,
-        storyboardPaths,
-        extension: file.extension,
-        sizeBytes: file.sizeBytes,
-        durationSeconds: null,
-        missing: false,
-        lastSeenAt: now,
-      },
-      update: {
-        libraryId: library.id,
-        folderPath: file.folderPath,
-        fileName: file.fileName,
-        thumbnailPath: thumbnailPath ?? undefined,
-        storyboardPaths,
-        extension: file.extension,
-        sizeBytes: file.sizeBytes,
-        missing: false,
-        lastSeenAt: now,
-      },
+      create: createData as never,
+      update: updateData as never,
     });
 
     processedCount += 1;

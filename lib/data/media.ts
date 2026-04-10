@@ -1,6 +1,30 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
+export type MediaItemRecord = {
+  id: string;
+  libraryId: string;
+  fullPath: string;
+  folderPath: string;
+  fileName: string;
+  title: string | null;
+  thumbnailPath: string | null;
+  storyboardPaths: string[];
+  storyboardTimestamps: number[];
+  extension: string;
+  sizeBytes: bigint | null;
+  durationSeconds: number | null;
+  missing: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  lastSeenAt: Date;
+  library: {
+    id: string;
+    name: string;
+    path: string;
+  };
+};
+
 export type MediaSort =
   | "updated-desc"
   | "updated-asc"
@@ -130,7 +154,7 @@ export async function getMediaItemById(id: string) {
         },
       },
     },
-  });
+  }) as Promise<MediaItemRecord | null>;
 }
 
 function getOrderBy(sort: MediaSort): Prisma.MediaItemOrderByWithRelationInput[] {

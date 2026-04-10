@@ -11,7 +11,11 @@ const THUMBNAILS_DIR = path.join(APP_DATA_DIR, "thumbnails");
 const STORYBOARDS_DIR = path.join(APP_DATA_DIR, "storyboards");
 const THUMBNAIL_ROUTE_PREFIX = "/api/thumbnails";
 const STORYBOARD_ROUTE_PREFIX = "/api/storyboards";
-const STORYBOARD_FRAME_COUNT = 10;
+
+type StoryboardFrame = {
+  path: string;
+  timestamp: number;
+};
 
 export async function ensureThumbnailForVideo(videoPath: string) {
   const thumbnailFileName = `${createHash("sha1").update(videoPath).digest("hex")}.jpg`;
@@ -49,41 +53,39 @@ export async function ensureStoryboardForVideo(videoPath: string) {
 
   await mkdir(STORYBOARDS_DIR, { recursive: true });
 
-  const existingPaths = await Promise.all(
-    Array.from({ length: STORYBOARD_FRAME_COUNT }, async (_, index) => {
-      const fileName = `${hash}-${index + 1}.jpg`;
-      const diskPath = path.join(STORYBOARDS_DIR, fileName);
-
-      return (await fileExists(diskPath)) ? `${STORYBOARD_ROUTE_PREFIX}/${fileName}` : null;
-    }),
-  );
-
-  if (existingPaths.every(Boolean)) {
-    return existingPaths.filter((item): item is string => Boolean(item));
-  }
-
-  try {
-    await execFileAsync("ffprobe", [
-      "-v",
-      "error",
-      "-show_entries",
-      "format=duration",
-      "-of",
-      "default=noprint_wrappers=1:nokey=1",
-      videoPath,
-    ]);
-  } catch {
-    return [];
-  }
-
   const duration = await readVideoDuration(videoPath);
 
   if (!duration || duration <= 0) {
-    return [];
+    return {
+      durationSeconds: null,
+      frames: [],
+    };
   }
 
-  const timestamps = buildStoryboardTimestamps(duration, STORYBOARD_FRAME_COUNT);
-  const generatedPaths: string[] = [];
+  const frameCount = getStoryboardFrameCount(duration);
+  const timestamps = buildStoryboardTimestamps(duration, frameCount);
+  const existingFrames = await Promise.all(
+    timestamps.map(async (timestamp, index) => {
+      const fileName = `${hash}-${index + 1}.jpg`;
+      const diskPath = path.join(STORYBOARDS_DIR, fileName);
+
+      return (await fileExists(diskPath))
+        ? {
+            path: `${STORYBOARD_ROUTE_PREFIX}/${fileName}`,
+            timestamp,
+          }
+        : null;
+    }),
+  );
+
+  if (existingFrames.every(Boolean)) {
+    return {
+      durationSeconds: Math.round(duration),
+      frames: existingFrames.filter((item): item is StoryboardFrame => Boolean(item)),
+    };
+  }
+
+  const generatedFrames: StoryboardFrame[] = [];
 
   for (const [index, timestamp] of timestamps.entries()) {
     const fileName = `${hash}-${index + 1}.jpg`;
@@ -91,7 +93,10 @@ export async function ensureStoryboardForVideo(videoPath: string) {
     const publicPath = `${STORYBOARD_ROUTE_PREFIX}/${fileName}`;
 
     if (await fileExists(diskPath)) {
-      generatedPaths.push(publicPath);
+      generatedFrames.push({
+        path: publicPath,
+        timestamp,
+      });
       continue;
     }
 
@@ -112,14 +117,20 @@ export async function ensureStoryboardForVideo(videoPath: string) {
       ]);
 
       if (await fileExists(diskPath)) {
-        generatedPaths.push(publicPath);
+        generatedFrames.push({
+          path: publicPath,
+          timestamp,
+        });
       }
     } catch {
       continue;
     }
   }
 
-  return generatedPaths;
+  return {
+    durationSeconds: Math.round(duration),
+    frames: generatedFrames,
+  };
 }
 
 export function getThumbnailDiskPath(fileName: string) {
@@ -159,6 +170,24 @@ function buildStoryboardTimestamps(durationSeconds: number, frameCount: number) 
     const position = (index + 0.5) / frameCount;
     return startOffset + span * position;
   });
+}
+
+function getStoryboardFrameCount(durationSeconds: number) {
+  const minutes = durationSeconds / 60;
+
+  if (minutes < 10) {
+    return 10;
+  }
+
+  if (minutes < 30) {
+    return 14;
+  }
+
+  if (minutes < 90) {
+    return 20;
+  }
+
+  return 28;
 }
 
 async function fileExists(targetPath: string) {

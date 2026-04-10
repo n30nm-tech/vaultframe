@@ -1,16 +1,18 @@
 # Changelog
 
-## v2.0.1 - Unreleased
+## v2.1.0 - Unreleased
 
 ### Added
 
 - Storyboard preview frame generation for videos using FFmpeg
-- Media detail storyboard strip built from generated preview frames
+- Adaptive storyboard frame counts based on video duration
+- Clickable storyboard frames that start playback from the selected point
 
 ### Changed
 
 - Desktop media cards now use storyboard frames for richer hover previews
 - In-card video playback sizing is more phone-friendly on mobile screens
+- Media detail playback now starts at the poster size and can be expanded on demand
 
 ## v2.0.0 - 2026-04-09
 

@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { MediaDetailPlayer } from "@/components/media/media-detail-player";
 import { getMediaItemById } from "@/lib/data/media";
-import { Film, FolderTree, HardDrive, TriangleAlert } from "lucide-react";
+import { FolderTree, HardDrive, TriangleAlert } from "lucide-react";
 
 type MediaDetailPageProps = {
   params: Promise<{
@@ -26,6 +26,11 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
     );
   }
 
+  const storyboards = mediaItem.storyboardPaths.map((path, index) => ({
+    path,
+    timestamp: mediaItem.storyboardTimestamps[index] ?? 0,
+  }));
+
   return (
     <div>
       <PageHeader
@@ -36,57 +41,13 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-surface/80 shadow-panel">
-          {mediaItem.missing ? (
-            mediaItem.thumbnailPath ? (
-              <div className="relative aspect-video">
-                <Image
-                  src={mediaItem.thumbnailPath}
-                  alt={mediaItem.title?.trim() || mediaItem.fileName}
-                  fill
-                  unoptimized
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
-                <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-accent/10 text-accent">
-                  <Film className="h-10 w-10" />
-                </div>
-              </div>
-            )
-          ) : (
-            <video
-              src={`/api/media/${mediaItem.id}`}
-              poster={mediaItem.thumbnailPath ?? undefined}
-              controls
-              playsInline
-              className="aspect-video w-full bg-black object-contain"
-            />
-          )}
-
-          {mediaItem.storyboardPaths.length > 0 ? (
-            <div className="border-t border-white/10 px-4 py-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Storyboard Preview
-              </p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {mediaItem.storyboardPaths.map((storyboardPath, index) => (
-                  <div
-                    key={storyboardPath}
-                    className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black/30"
-                  >
-                    <Image
-                      src={storyboardPath}
-                      alt={`${mediaItem.title?.trim() || mediaItem.fileName} frame ${index + 1}`}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <MediaDetailPlayer
+            mediaId={mediaItem.id}
+            title={mediaItem.title?.trim() || mediaItem.fileName}
+            posterPath={mediaItem.thumbnailPath}
+            missing={mediaItem.missing}
+            storyboards={storyboards}
+          />
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-panel">

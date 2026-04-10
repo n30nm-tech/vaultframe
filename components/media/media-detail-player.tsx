@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { Expand, Film, Play, TriangleAlert } from "lucide-react";
 
@@ -12,6 +12,10 @@ type MediaDetailPlayerProps = {
   title: string;
   posterPath: string | null;
   missing: boolean;
+  storyboards: Array<{
+    path: string;
+    timestamp: number;
+  }>;
 };
 
 export function MediaDetailPlayer({
@@ -19,10 +23,13 @@ export function MediaDetailPlayer({
   title,
   posterPath,
   missing,
+  storyboards,
 }: MediaDetailPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerSize, setPlayerSize] = useState<PlayerSize>("small");
+  const [seekTarget, setSeekTarget] = useState<number | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const playerWidthClass =
     playerSize === "large"
@@ -30,6 +37,34 @@ export function MediaDetailPlayer({
       : playerSize === "medium"
         ? "max-w-4xl"
         : "max-w-3xl";
+  const handleStoryboardSelect = (timestamp: number) => {
+    setSeekTarget(timestamp);
+    setIsPlaying(true);
+  };
+
+  useEffect(() => {
+    if (!isPlaying || seekTarget === null || !videoRef.current) {
+      return;
+    }
+
+    const video = videoRef.current;
+    const applySeek = () => {
+      video.currentTime = seekTarget;
+      void video.play().catch(() => undefined);
+      setSeekTarget(null);
+    };
+
+    if (video.readyState >= 1) {
+      applySeek();
+      return;
+    }
+
+    video.addEventListener("loadedmetadata", applySeek, { once: true });
+
+    return () => {
+      video.removeEventListener("loadedmetadata", applySeek);
+    };
+  }, [isPlaying, seekTarget]);
 
   if (missing) {
     return posterPath ? (
@@ -55,6 +90,7 @@ export function MediaDetailPlayer({
         <div className={clsx("mx-auto w-full", playerWidthClass)}>
           <div ref={frameRef} className="overflow-hidden rounded-[24px] border border-white/10 bg-black">
             <video
+              ref={videoRef}
               src={`/api/media/${mediaId}`}
               poster={posterPath ?? undefined}
               controls
@@ -91,36 +127,110 @@ export function MediaDetailPlayer({
             Fullscreen
           </button>
         </div>
+
+        {storyboards.length > 0 ? (
+          <div className="border-t border-white/10 pt-4">
+            <StoryboardGrid storyboards={storyboards} title={title} onSelect={handleStoryboardSelect} />
+          </div>
+        ) : null}
       </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => setIsPlaying(true)}
-      className="group relative block aspect-video w-full overflow-hidden bg-black text-left"
-    >
-      {posterPath ? (
-        <Image src={posterPath} alt={title} fill unoptimized className="object-cover transition duration-300 group-hover:scale-[1.02]" />
-      ) : (
-        <div className="flex h-full items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-accent/10 text-accent">
-            <Film className="h-10 w-10" />
+    <div>
+      <button
+        type="button"
+        onClick={() => {
+          setSeekTarget(null);
+          setIsPlaying(true);
+        }}
+        className="group relative block aspect-video w-full overflow-hidden bg-black text-left"
+      >
+        {posterPath ? (
+          <Image src={posterPath} alt={title} fill unoptimized className="object-cover transition duration-300 group-hover:scale-[1.02]" />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-accent/10 text-accent">
+              <Film className="h-10 w-10" />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-        <div className="flex items-center gap-3 rounded-full border border-white/15 bg-black/65 px-5 py-3 text-white shadow-2xl transition group-hover:bg-black/80">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-slate-950">
-            <Play className="ml-0.5 h-5 w-5" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+          <div className="flex items-center gap-3 rounded-full border border-white/15 bg-black/65 px-5 py-3 text-white shadow-2xl transition group-hover:bg-black/80">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-slate-950">
+              <Play className="ml-0.5 h-5 w-5" />
+            </div>
+            <span className="text-sm font-semibold tracking-[0.08em]">Play Video</span>
           </div>
-          <span className="text-sm font-semibold tracking-[0.08em]">Play Video</span>
         </div>
-      </div>
-    </button>
+      </button>
+
+      {storyboards.length > 0 ? (
+        <div className="border-t border-white/10 px-4 py-4">
+          <StoryboardGrid storyboards={storyboards} title={title} onSelect={handleStoryboardSelect} />
+        </div>
+      ) : null}
+    </div>
   );
+}
+
+function StoryboardGrid({
+  storyboards,
+  title,
+  onSelect,
+}: {
+  storyboards: Array<{
+    path: string;
+    timestamp: number;
+  }>;
+  title: string;
+  onSelect: (timestamp: number) => void;
+}) {
+  return (
+    <>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        Storyboard Preview
+      </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {storyboards.map((storyboard, index) => (
+          <button
+            key={storyboard.path}
+            type="button"
+            onClick={() => onSelect(storyboard.timestamp)}
+            className="group text-left"
+          >
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black/30 transition group-hover:border-accent/30">
+              <Image
+                src={storyboard.path}
+                alt={`${title} frame ${index + 1}`}
+                fill
+                unoptimized
+                className="object-cover"
+              />
+            </div>
+            <span className="mt-2 block text-xs text-slate-400">
+              {formatTimestamp(storyboard.timestamp)}
+            </span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function formatTimestamp(seconds: number) {
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainder = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+  }
+
+  return `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
 function SizeButton({
