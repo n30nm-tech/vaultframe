@@ -36,7 +36,7 @@ export function MediaDetailPlayer({
       ? "max-w-none"
       : playerSize === "medium"
         ? "max-w-4xl"
-        : "max-w-3xl";
+        : "max-w-2xl";
   const handleStoryboardSelect = (timestamp: number) => {
     setSeekTarget(timestamp);
     setIsPlaying(true);
@@ -48,21 +48,33 @@ export function MediaDetailPlayer({
     }
 
     const video = videoRef.current;
-    const applySeek = () => {
-      video.currentTime = seekTarget;
-      void video.play().catch(() => undefined);
+    const applySeek = async () => {
+      try {
+        video.currentTime = seekTarget;
+      } catch {
+        return;
+      }
+
+      try {
+        await video.play();
+      } catch {
+        return;
+      }
+
       setSeekTarget(null);
     };
 
-    if (video.readyState >= 1) {
-      applySeek();
+    if (video.readyState >= 1 && Number.isFinite(video.duration)) {
+      void applySeek();
       return;
     }
 
     video.addEventListener("loadedmetadata", applySeek, { once: true });
+    video.addEventListener("canplay", applySeek, { once: true });
 
     return () => {
       video.removeEventListener("loadedmetadata", applySeek);
+      video.removeEventListener("canplay", applySeek);
     };
   }, [isPlaying, seekTarget]);
 
@@ -87,7 +99,7 @@ export function MediaDetailPlayer({
   if (isPlaying) {
     return (
       <div className="space-y-3 p-3 sm:p-4">
-        <div className={clsx("mx-auto w-full", playerWidthClass)}>
+        <div className={clsx("mx-auto w-full transition-all duration-200", playerWidthClass)}>
           <div ref={frameRef} className="overflow-hidden rounded-[24px] border border-white/10 bg-black">
             <video
               ref={videoRef}
