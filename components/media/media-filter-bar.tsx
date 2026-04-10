@@ -85,9 +85,17 @@ export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarPr
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
           >
             <option value="updated-desc">Newest updated</option>
+            <option value="updated-asc">Oldest updated</option>
+            <option value="created-desc">Newest added</option>
+            <option value="created-asc">Oldest added</option>
             <option value="title-asc">Title A-Z</option>
             <option value="title-desc">Title Z-A</option>
             <option value="filename-asc">Filename A-Z</option>
+            <option value="filename-desc">Filename Z-A</option>
+            <option value="library-asc">Library A-Z</option>
+            <option value="folder-asc">Folder A-Z</option>
+            <option value="size-desc">Largest first</option>
+            <option value="size-asc">Smallest first</option>
           </select>
         </Field>
       </div>

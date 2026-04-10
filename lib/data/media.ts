@@ -1,7 +1,19 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-export type MediaSort = "updated-desc" | "title-asc" | "title-desc" | "filename-asc";
+export type MediaSort =
+  | "updated-desc"
+  | "updated-asc"
+  | "created-desc"
+  | "created-asc"
+  | "title-asc"
+  | "title-desc"
+  | "filename-asc"
+  | "filename-desc"
+  | "library-asc"
+  | "folder-asc"
+  | "size-desc"
+  | "size-asc";
 
 export type MediaQueryParams = {
   search?: string;
@@ -123,12 +135,28 @@ export async function getMediaItemById(id: string) {
 
 function getOrderBy(sort: MediaSort): Prisma.MediaItemOrderByWithRelationInput[] {
   switch (sort) {
+    case "updated-asc":
+      return [{ updatedAt: "asc" }];
+    case "created-desc":
+      return [{ createdAt: "desc" }];
+    case "created-asc":
+      return [{ createdAt: "asc" }];
     case "title-asc":
       return [{ title: "asc" }, { fileName: "asc" }];
     case "title-desc":
       return [{ title: "desc" }, { fileName: "asc" }];
     case "filename-asc":
       return [{ fileName: "asc" }];
+    case "filename-desc":
+      return [{ fileName: "desc" }];
+    case "library-asc":
+      return [{ library: { name: "asc" } }, { fileName: "asc" }];
+    case "folder-asc":
+      return [{ folderPath: "asc" }, { fileName: "asc" }];
+    case "size-desc":
+      return [{ sizeBytes: "desc" }, { fileName: "asc" }];
+    case "size-asc":
+      return [{ sizeBytes: "asc" }, { fileName: "asc" }];
     case "updated-desc":
     default:
       return [{ updatedAt: "desc" }];
