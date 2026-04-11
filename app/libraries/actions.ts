@@ -9,9 +9,9 @@ import {
 } from "@/lib/data/libraries";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
 import {
+  enqueueLibraryScan,
   getLibraryScanAvailability,
   isFolderBrowserError,
-  startLibraryScanInBackground,
 } from "@/lib/server/library-scan";
 
 export type LibraryActionState = {
@@ -136,12 +136,12 @@ export async function scanLibraryAction(
 
   try {
     await getLibraryScanAvailability(id);
-    startLibraryScanInBackground(id);
+    const result = await enqueueLibraryScan(id);
     revalidatePath("/libraries");
 
     return {
       success: true,
-      message: "Scan started. You can keep using the app while progress updates here.",
+      message: result.message,
     };
   } catch (error) {
     return {

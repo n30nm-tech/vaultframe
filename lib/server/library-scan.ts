@@ -32,6 +32,7 @@ export async function scanLibraryById(libraryId: string) {
   const now = new Date();
   await updateLibraryScanState(libraryId, {
     scanStatus: "RUNNING",
+    scanQueuedAt: null,
     scanStartedAt: now,
     scanFinishedAt: null,
     scanCurrentPath: libraryPath,
@@ -147,17 +148,20 @@ export async function scanLibraryById(libraryId: string) {
     });
   }
 
+  const completionData: Record<string, unknown> = {
+    lastScannedAt: now,
+    scanStatus: "IDLE",
+    scanQueuedAt: null,
+    scanFinishedAt: new Date(),
+    scanCurrentPath: null,
+    scanFilesScanned: processedCount,
+    scanVideosFound: files.length,
+    scanError: null,
+  };
+
   await prisma.library.update({
     where: { id: libraryId },
-    data: {
-      lastScannedAt: now,
-      scanStatus: "IDLE",
-      scanFinishedAt: new Date(),
-      scanCurrentPath: null,
-      scanFilesScanned: processedCount,
-      scanVideosFound: files.length,
-      scanError: null,
-    },
+    data: completionData as never,
   });
 
   return {
@@ -175,14 +179,88 @@ export function startLibraryScanInBackground(libraryId: string) {
   void (async () => {
     try {
       await scanLibraryById(libraryId);
+      await startNextQueuedLibraryScan();
     } catch (error) {
       await updateLibraryScanState(libraryId, {
         scanStatus: "FAILED",
+        scanQueuedAt: null,
         scanFinishedAt: new Date(),
         scanError: error instanceof Error ? error.message : "Scan failed.",
       });
+      await startNextQueuedLibraryScan();
     }
   })();
+}
+
+export async function enqueueLibraryScan(libraryId: string) {
+  const library = await prisma.library.findUnique({
+    where: { id: libraryId },
+    select: {
+      id: true,
+      name: true,
+      scanStatus: true,
+    },
+  });
+
+  if (!library) {
+    throw new Error("Library not found.");
+  }
+
+  if (library.scanStatus === "RUNNING") {
+    return {
+      started: false,
+      queued: false,
+      message: "This library is already scanning.",
+    };
+  }
+
+  if (library.scanStatus === "QUEUED") {
+    return {
+      started: false,
+      queued: true,
+      message: "This library is already queued.",
+    };
+  }
+
+  const runningScan = await prisma.library.findFirst({
+    where: {
+      scanStatus: "RUNNING",
+      NOT: {
+        id: libraryId,
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
+  if (runningScan) {
+    await updateLibraryScanState(libraryId, {
+      scanStatus: "QUEUED",
+      scanQueuedAt: new Date(),
+      scanStartedAt: null,
+      scanFinishedAt: null,
+      scanCurrentPath: null,
+      scanFilesScanned: 0,
+      scanVideosFound: 0,
+      scanError: null,
+    });
+
+    return {
+      started: false,
+      queued: true,
+      message: `Queued behind ${runningScan.name}. It will start automatically.`,
+    };
+  }
+
+  startLibraryScanInBackground(libraryId);
+
+  return {
+    started: true,
+    queued: false,
+    message: "Scan started. Other queued libraries will run automatically after this one.",
+  };
 }
 
 export async function getLibraryScanAvailability(libraryId: string) {
@@ -210,6 +288,38 @@ export async function getLibraryScanAvailability(libraryId: string) {
   }
 
   return true;
+}
+
+async function startNextQueuedLibraryScan() {
+  const runningScan = await prisma.library.findFirst({
+    where: {
+      scanStatus: "RUNNING",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (runningScan) {
+    return;
+  }
+
+  const nextQueuedLibrary = await prisma.library.findFirst({
+    where: {
+      scanStatus: "QUEUED",
+      enabled: true,
+    },
+    orderBy: [{ updatedAt: "asc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+    },
+  });
+
+  if (!nextQueuedLibrary) {
+    return;
+  }
+
+  startLibraryScanInBackground(nextQueuedLibrary.id);
 }
 
 async function collectVideoFiles(

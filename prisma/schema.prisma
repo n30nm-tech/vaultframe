@@ -13,6 +13,7 @@ model Library {
   path          String      @unique
   enabled       Boolean     @default(true)
   scanStatus    String      @default("IDLE")
+  scanQueuedAt  DateTime?
   scanStartedAt DateTime?
   scanFinishedAt DateTime?
   scanCurrentPath String?

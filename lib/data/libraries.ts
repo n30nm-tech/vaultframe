@@ -8,6 +8,7 @@ export type LibraryRecord = {
   path: string;
   enabled: boolean;
   scanStatus: string;
+  scanQueuedAt: Date | null;
   scanStartedAt: Date | null;
   scanFinishedAt: Date | null;
   scanCurrentPath: string | null;
@@ -98,6 +99,7 @@ export async function updateLibraryScanState(
   id: string,
   data: {
     scanStatus?: string;
+    scanQueuedAt?: Date | null;
     scanStartedAt?: Date | null;
     scanFinishedAt?: Date | null;
     scanCurrentPath?: string | null;
@@ -109,7 +111,7 @@ export async function updateLibraryScanState(
 ) {
   return prisma.library.update({
     where: { id },
-    data,
+    data: data as never,
   });
 }
 

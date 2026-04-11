@@ -8,20 +8,21 @@ import { scanLibraryAction, type LibraryActionState } from "@/app/libraries/acti
 type ScanLibraryFormProps = {
   libraryId: string;
   disabled?: boolean;
+  scanStatus?: string;
 };
 
 const initialState: LibraryActionState = {
   success: false,
 };
 
-export function ScanLibraryForm({ libraryId, disabled }: ScanLibraryFormProps) {
+export function ScanLibraryForm({ libraryId, disabled, scanStatus }: ScanLibraryFormProps) {
   const [state, formAction] = useActionState(scanLibraryAction, initialState);
 
   return (
     <div className="min-w-[220px]">
       <form action={formAction}>
         <input type="hidden" name="id" value={libraryId} />
-        <ScanSubmitButton disabled={disabled} />
+        <ScanSubmitButton disabled={disabled} scanStatus={scanStatus} />
       </form>
       {state.error ? (
         <p className="mt-2 text-xs leading-5 text-rose-300">{state.error}</p>
@@ -33,8 +34,24 @@ export function ScanLibraryForm({ libraryId, disabled }: ScanLibraryFormProps) {
   );
 }
 
-function ScanSubmitButton({ disabled }: { disabled?: boolean }) {
+function ScanSubmitButton({
+  disabled,
+  scanStatus,
+}: {
+  disabled?: boolean;
+  scanStatus?: string;
+}) {
   const { pending } = useFormStatus();
+  const label =
+    pending
+      ? "Starting..."
+      : disabled
+        ? "Unavailable"
+        : scanStatus === "RUNNING"
+          ? "Scanning..."
+          : scanStatus === "QUEUED"
+            ? "Queued"
+            : "Scan";
 
   return (
     <button
@@ -43,7 +60,7 @@ function ScanSubmitButton({ disabled }: { disabled?: boolean }) {
       className="inline-flex items-center gap-2 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <ScanSearch className="h-4 w-4" />
-      {pending ? "Starting..." : disabled ? "Unavailable" : "Scan"}
+      {label}
     </button>
   );
 }

@@ -10,6 +10,7 @@
 - Folder breadcrumb labels across the media browser and detail view
 - Media duration and file-size metadata in the browser and detail panels
 - Remembered media search, filter, and sort selections across visits
+- Library scan queueing so only one scan runs at a time and the rest continue automatically
 
 ### Changed
 
@@ -18,6 +19,7 @@
 - Media detail playback now starts at the poster size and can be expanded on demand
 - Scan progress persistence is throttled to reduce database churn on large libraries
 - App branding and documentation now reflect the v2.1 release
+- Library scans now queue behind the active scan instead of running in parallel
 
 ### Fixed
 

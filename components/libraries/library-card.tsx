@@ -13,6 +13,12 @@ type LibraryCardProps = {
 };
 
 export function LibraryCard({ library, onEdit }: LibraryCardProps) {
+  const scanDisabled =
+    !library.storageAvailable ||
+    !library.enabled ||
+    library.scanStatus === "RUNNING" ||
+    library.scanStatus === "QUEUED";
+
   return (
     <article className="rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[28px] sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -36,7 +42,11 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <ScanLibraryForm libraryId={library.id} disabled={!library.storageAvailable || !library.enabled} />
+          <ScanLibraryForm
+            libraryId={library.id}
+            disabled={scanDisabled}
+            scanStatus={library.scanStatus}
+          />
           <button
             type="button"
             onClick={() => onEdit(library)}
@@ -66,6 +76,20 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
           </p>
           {library.scanCurrentPath ? (
             <p className="mt-2 break-all text-xs leading-5 text-sky-200">{library.scanCurrentPath}</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {library.scanStatus === "QUEUED" ? (
+        <div className="mt-4 rounded-2xl border border-indigo-400/20 bg-indigo-400/10 px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-100">Queued</p>
+          <p className="mt-2 text-sm text-indigo-50">
+            Waiting for the current scan to finish. This library will start automatically.
+          </p>
+          {library.scanQueuedAt ? (
+            <p className="mt-2 text-xs leading-5 text-indigo-200">
+              Added to queue {formatDateTime(library.scanQueuedAt)}
+            </p>
           ) : null}
         </div>
       ) : null}
