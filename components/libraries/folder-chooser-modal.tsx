@@ -90,9 +90,9 @@ export function FolderChooserModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
       <div className="mx-auto flex min-h-screen w-full items-stretch px-0 py-0 sm:min-h-0 sm:max-w-4xl sm:items-center sm:px-4 sm:py-6">
-      <div className="flex h-full w-full flex-col overflow-hidden bg-[#090c11] shadow-2xl sm:max-h-[88vh] sm:rounded-[32px] sm:border sm:border-white/10">
+      <div className="flex h-full max-h-[100dvh] w-full flex-col overflow-hidden bg-[#090c11] shadow-2xl sm:max-h-[88vh] sm:rounded-[32px] sm:border sm:border-white/10">
         <div className="flex items-start justify-between border-b border-white/10 px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-accent">Choose folder</p>
@@ -182,7 +182,7 @@ export function FolderChooserModal({
                 </button>
               </div>
             ) : data?.mode === "roots" ? (
-              <div className="h-full overflow-y-auto p-3">
+              <div className="h-full overflow-y-auto overscroll-contain p-3 [touch-action:pan-y]">
                 {data.roots.length === 0 ? (
                   <div className="flex h-full items-center justify-center px-6 text-center">
                     <p className="max-w-lg text-sm leading-7 text-slate-400">
@@ -214,7 +214,7 @@ export function FolderChooserModal({
                 )}
               </div>
             ) : data?.mode === "folder" ? (
-              <div className="h-full overflow-y-auto p-3">
+              <div className="h-full overflow-y-auto overscroll-contain p-3 [touch-action:pan-y]">
                 <button
                   type="button"
                   onClick={() => setSelectedPath(data.currentPath)}
