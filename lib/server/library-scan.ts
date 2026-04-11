@@ -278,6 +278,7 @@ export async function enqueueLibraryScan(libraryId: string) {
     };
   }
 
+  await markLibraryScanRunning(libraryId);
   startLibraryScanInBackground(libraryId);
 
   return {
@@ -357,6 +358,7 @@ async function startNextQueuedLibraryScan() {
     return;
   }
 
+  await markLibraryScanRunning(nextQueuedLibrary.id);
   startLibraryScanInBackground(nextQueuedLibrary.id);
 }
 
@@ -438,6 +440,19 @@ async function collectVideoFiles(
 
 export function isFolderBrowserError(error: unknown) {
   return error instanceof FolderBrowserError;
+}
+
+async function markLibraryScanRunning(libraryId: string) {
+  await updateLibraryScanState(libraryId, {
+    scanStatus: "RUNNING",
+    scanQueuedAt: null,
+    scanStartedAt: new Date(),
+    scanFinishedAt: null,
+    scanCurrentPath: null,
+    scanFilesScanned: 0,
+    scanVideosFound: 0,
+    scanError: null,
+  });
 }
 
 async function ensureTag(tagName: string) {
