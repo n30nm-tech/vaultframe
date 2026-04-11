@@ -2,10 +2,16 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { updateLibraryScanState } from "@/lib/data/libraries";
-import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
+import {
+  FolderBrowserError,
+  getDirectoryAvailability,
+  validateLibraryPath,
+} from "@/lib/server/folder-browser";
 import { ensureStoryboardForVideo, ensureThumbnailForVideo } from "@/lib/server/thumbnails";
 
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mkv", ".avi", ".mov", ".wmv", ".webm", ".m4v"]);
+const SCAN_PROGRESS_INTERVAL_MS = 1500;
+const SCAN_PROGRESS_FILE_STEP = 25;
 
 export async function scanLibraryById(libraryId: string) {
   const library = await prisma.library.findUnique({
@@ -17,6 +23,12 @@ export async function scanLibraryById(libraryId: string) {
   }
 
   const libraryPath = await validateLibraryPath(library.path);
+  const availability = await getDirectoryAvailability(libraryPath);
+
+  if (!availability.available) {
+    throw new Error(availability.message || "The library folder is currently unavailable.");
+  }
+
   const now = new Date();
   await updateLibraryScanState(libraryId, {
     scanStatus: "RUNNING",
@@ -28,11 +40,37 @@ export async function scanLibraryById(libraryId: string) {
     scanError: null,
   });
 
-  const files = await collectVideoFiles(libraryPath, async (currentPath, videosFound) => {
+  let lastProgressWriteAt = Date.now();
+  let lastProcessedWriteCount = 0;
+
+  const persistProgress = async (
+    currentPath: string,
+    filesScanned: number,
+    videosFound: number,
+    force = false,
+  ) => {
+    const nowMs = Date.now();
+    const shouldWrite =
+      force ||
+      nowMs - lastProgressWriteAt >= SCAN_PROGRESS_INTERVAL_MS ||
+      filesScanned - lastProcessedWriteCount >= SCAN_PROGRESS_FILE_STEP;
+
+    if (!shouldWrite) {
+      return;
+    }
+
+    lastProgressWriteAt = nowMs;
+    lastProcessedWriteCount = filesScanned;
+
     await updateLibraryScanState(libraryId, {
       scanCurrentPath: currentPath,
+      scanFilesScanned: filesScanned,
       scanVideosFound: videosFound,
     });
+  };
+
+  const files = await collectVideoFiles(libraryPath, async (currentPath, videosFound) => {
+    await persistProgress(currentPath, 0, videosFound);
   });
   const seenPaths: string[] = [];
   let processedCount = 0;
@@ -83,11 +121,7 @@ export async function scanLibraryById(libraryId: string) {
     });
 
     processedCount += 1;
-    await updateLibraryScanState(libraryId, {
-      scanCurrentPath: file.fullPath,
-      scanFilesScanned: processedCount,
-      scanVideosFound: files.length,
-    });
+    await persistProgress(file.fullPath, processedCount, files.length);
   }
 
   if (seenPaths.length > 0) {
@@ -149,6 +183,33 @@ export function startLibraryScanInBackground(libraryId: string) {
       });
     }
   })();
+}
+
+export async function getLibraryScanAvailability(libraryId: string) {
+  const library = await prisma.library.findUnique({
+    where: { id: libraryId },
+    select: {
+      path: true,
+      enabled: true,
+    },
+  });
+
+  if (!library) {
+    throw new Error("Library not found.");
+  }
+
+  if (!library.enabled) {
+    throw new Error("Enable this library before scanning it.");
+  }
+
+  const libraryPath = await validateLibraryPath(library.path);
+  const availability = await getDirectoryAvailability(libraryPath);
+
+  if (!availability.available) {
+    throw new Error(availability.message || "The library folder is currently unavailable.");
+  }
+
+  return true;
 }
 
 async function collectVideoFiles(

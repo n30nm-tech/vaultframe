@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import { CalendarDays, Folder, ScanSearch, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarDays, Folder, ScanSearch, Trash2 } from "lucide-react";
 import { deleteLibraryAction, toggleLibraryEnabledAction } from "@/app/libraries/actions";
 import { ScanLibraryForm } from "@/components/libraries/scan-library-form";
 import type { LibraryRecord } from "@/lib/data/libraries";
@@ -36,7 +36,7 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <ScanLibraryForm libraryId={library.id} />
+          <ScanLibraryForm libraryId={library.id} disabled={!library.storageAvailable || !library.enabled} />
           <button
             type="button"
             onClick={() => onEdit(library)}
@@ -73,6 +73,20 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
       {library.scanStatus === "FAILED" && library.scanError ? (
         <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-4 text-sm text-rose-200">
           {library.scanError}
+        </div>
+      ) : null}
+
+      {!library.storageAvailable ? (
+        <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-4 text-sm text-amber-100">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-medium">Storage unavailable</p>
+              <p className="mt-1 text-amber-200/90">
+                {library.storageMessage || "This library path cannot be reached right now."}
+              </p>
+            </div>
+          </div>
         </div>
       ) : null}
     </article>

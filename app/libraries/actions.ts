@@ -8,7 +8,11 @@ import {
   updateLibrary,
 } from "@/lib/data/libraries";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
-import { isFolderBrowserError, startLibraryScanInBackground } from "@/lib/server/library-scan";
+import {
+  getLibraryScanAvailability,
+  isFolderBrowserError,
+  startLibraryScanInBackground,
+} from "@/lib/server/library-scan";
 
 export type LibraryActionState = {
   success: boolean;
@@ -131,6 +135,7 @@ export async function scanLibraryAction(
   }
 
   try {
+    await getLibraryScanAvailability(id);
     startLibraryScanInBackground(id);
     revalidatePath("/libraries");
 

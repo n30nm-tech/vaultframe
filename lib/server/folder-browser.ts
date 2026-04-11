@@ -108,6 +108,46 @@ export async function validateLibraryPath(pathValue: string) {
   return currentPath;
 }
 
+export async function getDirectoryAvailability(targetPath: string): Promise<{
+  available: boolean;
+  message: string | null;
+}> {
+  const trimmedPath = targetPath.trim();
+
+  if (!trimmedPath || !path.isAbsolute(trimmedPath)) {
+    return {
+      available: false,
+      message: "Library path is invalid.",
+    };
+  }
+
+  try {
+    const directoryPath = await resolveExistingDirectory(
+      path.normalize(trimmedPath),
+      "The selected folder does not exist.",
+    );
+
+    await readdir(directoryPath);
+
+    return {
+      available: true,
+      message: null,
+    };
+  } catch (error) {
+    if (error instanceof FolderBrowserError) {
+      return {
+        available: false,
+        message: error.message,
+      };
+    }
+
+    return {
+      available: false,
+      message: "The library folder is currently unavailable.",
+    };
+  }
+}
+
 export async function validateMediaFilePath(filePath: string, libraryPath: string) {
   const resolvedLibraryPath = await validateLibraryPath(libraryPath);
   const trimmedPath = filePath.trim();

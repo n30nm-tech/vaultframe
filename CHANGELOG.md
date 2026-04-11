@@ -13,6 +13,12 @@
 - Desktop media cards now use storyboard frames for richer hover previews
 - In-card video playback sizing is more phone-friendly on mobile screens
 - Media detail playback now starts at the poster size and can be expanded on demand
+- Scan progress persistence is throttled to reduce database churn on large libraries
+
+### Fixed
+
+- Libraries now surface storage-unavailable warnings when the mounted media path cannot be reached
+- Scan actions now stop early with a clear error when storage is offline or the library is disabled
 
 ## v2.0.0 - 2026-04-09
 
