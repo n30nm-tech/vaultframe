@@ -13,6 +13,13 @@ import { ensureStoryboardForVideo, ensureThumbnailForVideo } from "@/lib/server/
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mkv", ".avi", ".mov", ".wmv", ".webm", ".m4v"]);
 const SCAN_PROGRESS_INTERVAL_MS = 1500;
 const SCAN_PROGRESS_FILE_STEP = 25;
+const SCAN_RUNNER_INTERVAL_MS = 2000;
+
+const globalForScanRunner = globalThis as unknown as {
+  vaultFrameScanRunnerStarted?: boolean;
+  vaultFrameScanRunnerTimer?: ReturnType<typeof setInterval>;
+  vaultFrameActiveScanLibraryId?: string | null;
+};
 
 export async function scanLibraryById(libraryId: string) {
   const library = await prisma.library.findUnique({
@@ -199,23 +206,6 @@ export async function scanLibraryById(libraryId: string) {
   };
 }
 
-export function startLibraryScanInBackground(libraryId: string) {
-  void (async () => {
-    try {
-      await scanLibraryById(libraryId);
-      await startNextQueuedLibraryScan();
-    } catch (error) {
-      await updateLibraryScanState(libraryId, {
-        scanStatus: "FAILED",
-        scanQueuedAt: null,
-        scanFinishedAt: new Date(),
-        scanError: error instanceof Error ? error.message : "Scan failed.",
-      });
-      await startNextQueuedLibraryScan();
-    }
-  })();
-}
-
 export async function enqueueLibraryScan(libraryId: string) {
   const library = await prisma.library.findUnique({
     where: { id: libraryId },
@@ -279,7 +269,8 @@ export async function enqueueLibraryScan(libraryId: string) {
   }
 
   await markLibraryScanRunning(libraryId);
-  startLibraryScanInBackground(libraryId);
+  ensureScanRunnerStarted();
+  void runScanCycle();
 
   return {
     started: true,
@@ -315,17 +306,34 @@ export async function getLibraryScanAvailability(libraryId: string) {
   return true;
 }
 
-async function startNextQueuedLibraryScan() {
-  const runningScan = await prisma.library.findFirst({
+export function ensureScanRunnerStarted() {
+  if (globalForScanRunner.vaultFrameScanRunnerStarted) {
+    return;
+  }
+
+  globalForScanRunner.vaultFrameScanRunnerStarted = true;
+  globalForScanRunner.vaultFrameScanRunnerTimer = setInterval(() => {
+    void runScanCycle();
+  }, SCAN_RUNNER_INTERVAL_MS);
+}
+
+async function runScanCycle() {
+  if (globalForScanRunner.vaultFrameActiveScanLibraryId) {
+    return;
+  }
+
+  const runningLibrary = await prisma.library.findFirst({
     where: {
       scanStatus: "RUNNING",
     },
+    orderBy: [{ scanStartedAt: "asc" }, { updatedAt: "asc" }],
     select: {
       id: true,
     },
   });
 
-  if (runningScan) {
+  if (runningLibrary) {
+    await executeScanJob(runningLibrary.id);
     return;
   }
 
@@ -359,7 +367,7 @@ async function startNextQueuedLibraryScan() {
   }
 
   await markLibraryScanRunning(nextQueuedLibrary.id);
-  startLibraryScanInBackground(nextQueuedLibrary.id);
+  await executeScanJob(nextQueuedLibrary.id);
 }
 
 async function collectVideoFiles(
@@ -440,6 +448,27 @@ async function collectVideoFiles(
 
 export function isFolderBrowserError(error: unknown) {
   return error instanceof FolderBrowserError;
+}
+
+async function executeScanJob(libraryId: string) {
+  if (globalForScanRunner.vaultFrameActiveScanLibraryId) {
+    return;
+  }
+
+  globalForScanRunner.vaultFrameActiveScanLibraryId = libraryId;
+
+  try {
+    await scanLibraryById(libraryId);
+  } catch (error) {
+    await updateLibraryScanState(libraryId, {
+      scanStatus: "FAILED",
+      scanQueuedAt: null,
+      scanFinishedAt: new Date(),
+      scanError: error instanceof Error ? error.message : "Scan failed.",
+    });
+  } finally {
+    globalForScanRunner.vaultFrameActiveScanLibraryId = null;
+  }
 }
 
 async function markLibraryScanRunning(libraryId: string) {
