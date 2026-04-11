@@ -78,82 +78,128 @@ export async function scanLibraryById(libraryId: string) {
     });
   };
 
-  const files = await collectVideoFiles(libraryPath, async (currentPath, videosFound, filesVisited) => {
-    await persistProgress(currentPath, filesVisited, videosFound);
-  });
+  const files = await collectVideoFiles(
+    libraryPath,
+    async (currentPath, videosFound, filesVisited) => {
+      await persistProgress(currentPath, filesVisited, videosFound);
+    },
+  );
   const enabledTagRules = await listEnabledTagRules();
   const seenPaths: string[] = [];
   let processedCount = 0;
+  let indexedCount = 0;
+  let skippedCount = 0;
+  let lastNonFatalError: string | null = null;
 
   for (const file of files) {
-    seenPaths.push(file.fullPath);
-    const thumbnailPath = await ensureThumbnailForVideo(file.fullPath);
-    const storyboard = await ensureStoryboardForVideo(file.fullPath);
-    const storyboardPaths = storyboard.frames.map((frame) => frame.path);
-    const storyboardTimestamps = storyboard.frames.map((frame) => frame.timestamp);
-    const matchedTagNames = getMatchedRuleTagNames({
-      fileName: file.fileName,
-      folderPath: file.folderPath,
-      libraryName: library.name,
-      rules: enabledTagRules,
-    });
-    const matchedTags = await Promise.all(
-      matchedTagNames.map((tagName) => ensureTag(tagName)),
-    );
-    const tagConnections = matchedTags.map((tag) => ({ id: tag.id }));
+    try {
+      seenPaths.push(file.fullPath);
+      const matchedTagNames = getMatchedRuleTagNames({
+        fileName: file.fileName,
+        folderPath: file.folderPath,
+        libraryName: library.name,
+        rules: enabledTagRules,
+      });
+      const matchedTags = await Promise.all(
+        matchedTagNames.map((tagName) => ensureTag(tagName)),
+      );
+      const tagConnections = matchedTags.map((tag) => ({ id: tag.id }));
 
-    const createData: Record<string, unknown> = {
-      libraryId: library.id,
-      fullPath: file.fullPath,
-      folderPath: file.folderPath,
-      fileName: file.fileName,
-      title: null,
-      thumbnailPath,
-      storyboardPaths,
-      storyboardTimestamps,
-      extension: file.extension,
-      sizeBytes: file.sizeBytes,
-      durationSeconds: storyboard.durationSeconds,
-      missing: false,
-      lastSeenAt: now,
-      tags:
-        tagConnections.length > 0
-          ? {
-              connect: tagConnections,
-            }
-          : undefined,
-    };
-
-    const updateData: Record<string, unknown> = {
-      libraryId: library.id,
-      folderPath: file.folderPath,
-      fileName: file.fileName,
-      thumbnailPath: thumbnailPath ?? undefined,
-      storyboardPaths,
-      storyboardTimestamps,
-      extension: file.extension,
-      sizeBytes: file.sizeBytes,
-      durationSeconds: storyboard.durationSeconds ?? undefined,
-      missing: false,
-      lastSeenAt: now,
-      tags:
-        tagConnections.length > 0
-          ? {
-              connect: tagConnections,
-            }
-          : undefined,
-    };
-
-    await prisma.mediaItem.upsert({
-      where: {
+      const createData: Record<string, unknown> = {
+        libraryId: library.id,
         fullPath: file.fullPath,
-      },
-      create: createData as never,
-      update: updateData as never,
-    });
+        folderPath: file.folderPath,
+        fileName: file.fileName,
+        title: null,
+        thumbnailPath: null,
+        storyboardPaths: [],
+        storyboardTimestamps: [],
+        extension: file.extension,
+        sizeBytes: file.sizeBytes,
+        durationSeconds: null,
+        missing: false,
+        lastSeenAt: now,
+        tags:
+          tagConnections.length > 0
+            ? {
+                connect: tagConnections,
+              }
+            : undefined,
+      };
 
-    processedCount += 1;
-    await persistProgress(file.fullPath, processedCount, files.length);
+      const updateData: Record<string, unknown> = {
+        libraryId: library.id,
+        folderPath: file.folderPath,
+        fileName: file.fileName,
+        extension: file.extension,
+        sizeBytes: file.sizeBytes,
+        missing: false,
+        lastSeenAt: now,
+        tags:
+          tagConnections.length > 0
+            ? {
+                connect: tagConnections,
+              }
+            : undefined,
+      };
+
+      await prisma.mediaItem.upsert({
+        where: {
+          fullPath: file.fullPath,
+        },
+        create: createData as never,
+        update: updateData as never,
+      });
+
+      processedCount += 1;
+      indexedCount += 1;
+      await persistProgress(file.fullPath, processedCount, indexedCount, true);
+
+      try {
+        const thumbnailPath = await ensureThumbnailForVideo(file.fullPath);
+        const storyboard = await ensureStoryboardForVideo(file.fullPath);
+        const enrichmentData: Record<string, unknown> = {
+          durationSeconds: storyboard.durationSeconds ?? undefined,
+        };
+
+        if (thumbnailPath) {
+          enrichmentData.thumbnailPath = thumbnailPath;
+        }
+
+        if (storyboard.frames.length > 0) {
+          enrichmentData.storyboardPaths = storyboard.frames.map((frame) => frame.path);
+          enrichmentData.storyboardTimestamps = storyboard.frames.map((frame) => frame.timestamp);
+        }
+
+        await prisma.mediaItem.update({
+          where: {
+            fullPath: file.fullPath,
+          },
+          data: enrichmentData as never,
+        });
+      } catch (error) {
+        lastNonFatalError =
+          error instanceof Error ? error.message : "Skipped thumbnail/storyboard enrichment.";
+        console.error("Library scan skipped enrichment", {
+          libraryId,
+          path: file.fullPath,
+          error: lastNonFatalError,
+        });
+      }
+    } catch (error) {
+      skippedCount += 1;
+      lastNonFatalError = error instanceof Error ? error.message : "Skipped a file during scan.";
+      console.error("Library scan skipped file", {
+        libraryId,
+        path: file.fullPath,
+        error: lastNonFatalError,
+      });
+    }
+
+    if (processedCount < indexedCount + skippedCount) {
+      processedCount = indexedCount + skippedCount;
+      await persistProgress(file.fullPath, processedCount, indexedCount, true);
+    }
   }
 
   if (seenPaths.length > 0) {
@@ -186,8 +232,11 @@ export async function scanLibraryById(libraryId: string) {
     scanFinishedAt: new Date(),
     scanCurrentPath: null,
     scanFilesScanned: processedCount,
-    scanVideosFound: files.length,
-    scanError: null,
+    scanVideosFound: indexedCount,
+    scanError:
+      skippedCount > 0
+        ? `Skipped ${skippedCount} file${skippedCount === 1 ? "" : "s"} during scan.${lastNonFatalError ? ` Last error: ${lastNonFatalError}` : ""}`
+        : null,
   };
 
   await prisma.library.update({
@@ -196,7 +245,7 @@ export async function scanLibraryById(libraryId: string) {
   });
 
   return {
-    scannedCount: files.length,
+    scannedCount: indexedCount,
     missingCount: await prisma.mediaItem.count({
       where: {
         libraryId,
@@ -460,6 +509,10 @@ async function executeScanJob(libraryId: string) {
   try {
     await scanLibraryById(libraryId);
   } catch (error) {
+    console.error("Library scan failed", {
+      libraryId,
+      error: error instanceof Error ? error.message : "Scan failed.",
+    });
     await updateLibraryScanState(libraryId, {
       scanStatus: "FAILED",
       scanQueuedAt: null,
@@ -468,6 +521,7 @@ async function executeScanJob(libraryId: string) {
     });
   } finally {
     globalForScanRunner.vaultFrameActiveScanLibraryId = null;
+    void runScanCycle();
   }
 }
 

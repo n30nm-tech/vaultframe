@@ -72,7 +72,7 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
         <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">Scanning</p>
           <p className="mt-2 text-sm text-sky-50">
-            {library.scanFilesScanned} processed, {library.scanVideosFound} videos found
+            {library.scanFilesScanned} files checked, {library.scanVideosFound} videos indexed
           </p>
           {library.scanCurrentPath ? (
             <p className="mt-2 break-all text-xs leading-5 text-sky-200">{library.scanCurrentPath}</p>
