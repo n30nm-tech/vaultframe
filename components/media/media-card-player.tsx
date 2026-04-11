@@ -34,6 +34,10 @@ type MediaCardPlayerProps = {
     missing: boolean;
     sizeBytes: bigint | null;
     durationSeconds: number | null;
+    tags: Array<{
+      id: string;
+      name: string;
+    }>;
     library: {
       id: string;
       name: string;
@@ -269,6 +273,23 @@ export function MediaCardPlayer({
           <span>{formatDuration(mediaItem.durationSeconds)}</span>
           <span>{formatFileSize(mediaItem.sizeBytes)}</span>
         </div>
+        {mediaItem.tags.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {mediaItem.tags.slice(0, 4).map((tag) => (
+              <span
+                key={tag.id}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300"
+              >
+                {tag.name}
+              </span>
+            ))}
+            {mediaItem.tags.length > 4 ? (
+              <span className="rounded-full border border-white/10 bg-white/[0.02] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                +{mediaItem.tags.length - 4}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {playbackError ? <p className="mt-3 text-sm text-rose-300">{playbackError}</p> : null}

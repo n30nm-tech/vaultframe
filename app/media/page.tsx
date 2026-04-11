@@ -11,6 +11,7 @@ type MediaPageProps = {
     libraryId?: string;
     missing?: "all" | "missing" | "available";
     folder?: string;
+    tag?: string;
     sort?: MediaSort;
   }>;
 };
@@ -27,6 +28,7 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
     libraryId: params?.libraryId ?? storedFilters?.libraryId,
     missing: params?.missing ?? storedFilters?.missing,
     folder: params?.folder ?? storedFilters?.folder,
+    tag: params?.tag ?? storedFilters?.tag,
     sort: params?.sort ?? storedFilters?.sort,
   });
 
@@ -49,6 +51,7 @@ function parseStoredMediaFilters(value: string) {
       libraryId?: string;
       missing?: "all" | "missing" | "available";
       folder?: string;
+      tag?: string;
       sort?: MediaSort;
     };
 
@@ -57,6 +60,7 @@ function parseStoredMediaFilters(value: string) {
       libraryId: parsed.libraryId ?? "",
       missing: parsed.missing ?? "all",
       folder: parsed.folder ?? "",
+      tag: parsed.tag ?? "",
       sort: parsed.sort ?? "updated-desc",
     };
   } catch {

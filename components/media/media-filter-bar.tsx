@@ -9,6 +9,7 @@ type MediaFilterBarProps = {
     libraryId: string;
     missing: string;
     folder: string;
+    tag: string;
     sort: MediaSort;
   };
   libraries: Array<{
@@ -16,15 +17,17 @@ type MediaFilterBarProps = {
     name: string;
   }>;
   folders: string[];
+  tags: string[];
 };
 
-export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarProps) {
+export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilterBarProps) {
   const router = useRouter();
   const hasActiveFilters =
     Boolean(filters.search) ||
     Boolean(filters.libraryId) ||
     filters.missing !== "all" ||
     Boolean(filters.folder) ||
+    Boolean(filters.tag) ||
     filters.sort !== "updated-desc";
 
   return (
@@ -37,13 +40,14 @@ export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarPr
           libraryId: String(formData.get("libraryId") ?? ""),
           missing: String(formData.get("missing") ?? "all"),
           folder: String(formData.get("folder") ?? ""),
+          tag: String(formData.get("tag") ?? ""),
           sort: String(formData.get("sort") ?? "updated-desc"),
         };
 
         document.cookie = `vaultframe-media-filters=${encodeURIComponent(JSON.stringify(storedFilters))}; Path=/; Max-Age=2592000; SameSite=Lax`;
       }}
     >
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto]">
         <Field label="Search">
           <input
             name="search"
@@ -91,6 +95,21 @@ export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarPr
           <datalist id="folder-options">
             {folders.map((folder) => (
               <option key={folder} value={folder} />
+            ))}
+          </datalist>
+        </Field>
+
+        <Field label="Tag">
+          <input
+            name="tag"
+            list="tag-options"
+            defaultValue={filters.tag}
+            placeholder="Any tag"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-accent/40"
+          />
+          <datalist id="tag-options">
+            {tags.map((tag) => (
+              <option key={tag} value={tag} />
             ))}
           </datalist>
         </Field>

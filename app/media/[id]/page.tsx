@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaDetailPlayer } from "@/components/media/media-detail-player";
+import { MediaTagManager } from "@/components/media/media-tag-manager";
 import { getMediaItemById } from "@/lib/data/media";
 import { formatDuration, formatFileSize, getFolderBreadcrumbLabel } from "@/lib/media-presentation";
 import { FolderTree, HardDrive, TriangleAlert } from "lucide-react";
@@ -42,14 +43,18 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
       />
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="overflow-hidden rounded-[32px] border border-white/10 bg-surface/80 shadow-panel">
-          <MediaDetailPlayer
-            mediaId={mediaItem.id}
-            title={mediaItem.title?.trim() || mediaItem.fileName}
-            posterPath={mediaItem.thumbnailPath}
-            missing={mediaItem.missing}
-            storyboards={storyboards}
-          />
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-[32px] border border-white/10 bg-surface/80 shadow-panel">
+            <MediaDetailPlayer
+              mediaId={mediaItem.id}
+              title={mediaItem.title?.trim() || mediaItem.fileName}
+              posterPath={mediaItem.thumbnailPath}
+              missing={mediaItem.missing}
+              storyboards={storyboards}
+            />
+          </div>
+
+          <MediaTagManager mediaItemId={mediaItem.id} tags={mediaItem.tags} />
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-panel">
@@ -75,6 +80,15 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
             </div>
             <div className="break-all text-slate-400">{mediaItem.fullPath}</div>
             <div className="flex flex-wrap items-center gap-2">
+              {mediaItem.tags.map((tag) => (
+                <Link
+                  key={tag.id}
+                  href={`/media?tag=${encodeURIComponent(tag.name)}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 transition hover:bg-white/[0.08] hover:text-white"
+                >
+                  {tag.name}
+                </Link>
+              ))}
               {!mediaItem.library.storageAvailable ? (
                 <div className="inline-flex items-center gap-2 rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-rose-200">
                   <HardDrive className="h-3.5 w-3.5" />

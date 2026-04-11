@@ -1,5 +1,19 @@
 # Changelog
 
+## v3.0.0 - Unreleased
+
+### Added
+
+- Manual media tags with PostgreSQL persistence
+- Add and remove tag actions from the media detail page
+- Tag chips on media cards and detail pages
+- Tag filtering in the media browser
+
+### Changed
+
+- App branding and documentation now reflect the v3.0 release
+- Media search now also matches against tag names
+
 ## v2.1.0 - Unreleased
 
 ### Added

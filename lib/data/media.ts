@@ -19,6 +19,10 @@ export type MediaItemRecord = {
   createdAt: Date;
   updatedAt: Date;
   lastSeenAt: Date;
+  tags: Array<{
+    id: string;
+    name: string;
+  }>;
   library: {
     id: string;
     name: string;
@@ -55,16 +59,23 @@ export type MediaQueryParams = {
   libraryId?: string;
   missing?: "all" | "missing" | "available";
   folder?: string;
+  tag?: string;
   sort?: MediaSort;
 };
 
 export async function getMediaBrowserData(params: MediaQueryParams) {
+  const prismaWithTag = prisma as typeof prisma & {
+    tag: {
+      findMany: (args: unknown) => Promise<Array<{ id: string; name: string }>>;
+    };
+  };
   const search = params.search?.trim() ?? "";
   const folder = params.folder?.trim() ?? "";
+  const tag = params.tag?.trim() ?? "";
   const missing = params.missing ?? "all";
   const sort = params.sort ?? "updated-desc";
 
-  const where: Prisma.MediaItemWhereInput = {
+  const where: Record<string, unknown> = {
     ...(params.libraryId ? { libraryId: params.libraryId } : {}),
     ...(missing === "missing" ? { missing: true } : {}),
     ...(missing === "available" ? { missing: false } : {}),
@@ -73,6 +84,18 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
           folderPath: {
             contains: folder,
             mode: "insensitive",
+          },
+        }
+      : {}),
+    ...(tag
+      ? {
+          tags: {
+            some: {
+              name: {
+                equals: tag,
+                mode: "insensitive",
+              },
+            },
           },
         }
       : {}),
@@ -97,15 +120,34 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
                 mode: "insensitive",
               },
             },
+            {
+              tags: {
+                some: {
+                  name: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
           ],
         }
       : {}),
   };
 
-  const [mediaItems, libraries, folders, totalCount] = await Promise.all([
+  const [mediaItems, libraries, folders, tags, totalCount] = await Promise.all([
     prisma.mediaItem.findMany({
-      where,
+      where: where as never,
       include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+          orderBy: {
+            name: "asc",
+          },
+        },
         library: {
           select: {
             id: true,
@@ -113,9 +155,9 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
             path: true,
           },
         },
-      },
-      orderBy: getOrderBy(sort),
-    }),
+      } as never,
+      orderBy: getOrderBy(sort) as never,
+    } as never),
     prisma.library.findMany({
       orderBy: {
         name: "asc",
@@ -135,8 +177,33 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       },
       take: 100,
     }),
-    prisma.mediaItem.count(),
-  ]);
+    prismaWithTag.tag.findMany({
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    }) as Promise<Array<{ id: string; name: string }>>,
+    prisma.mediaItem.count({
+      where: where as never,
+    } as never),
+  ]) as [
+    Array<
+      Omit<MediaBrowserItemRecord, "library"> & {
+        library: {
+          id: string;
+          name: string;
+          path: string;
+        };
+      }
+    >,
+    Array<{ id: string; name: string }>,
+    Array<{ folderPath: string }>,
+    Array<{ id: string; name: string }>,
+    number,
+  ];
 
   const libraryAvailability = new Map<string, boolean>();
 
@@ -162,6 +229,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     mediaItems: enrichedMediaItems,
     libraries,
     folders: folders.map((item) => item.folderPath),
+    tags,
     totalCount,
     filteredCount: enrichedMediaItems.length,
     filters: {
@@ -169,6 +237,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       libraryId: params.libraryId ?? "",
       missing,
       folder,
+      tag,
       sort,
     },
   };
@@ -178,6 +247,15 @@ export async function getMediaItemById(id: string) {
   const mediaItem = (await prisma.mediaItem.findUnique({
     where: { id },
     include: {
+      tags: {
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: {
+          name: "asc",
+        },
+      },
       library: {
         select: {
           id: true,
@@ -185,8 +263,8 @@ export async function getMediaItemById(id: string) {
           path: true,
         },
       },
-    },
-  })) as MediaItemRecord | null;
+    } as never,
+  } as never)) as MediaItemRecord | null;
 
   if (!mediaItem) {
     return null;

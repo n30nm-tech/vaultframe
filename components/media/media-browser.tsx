@@ -22,6 +22,7 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
         filters={data.filters}
         libraries={data.libraries}
         folders={data.folders}
+        tags={data.tags.map((tag) => tag.name)}
       />
 
       {!hasLibraries ? (
