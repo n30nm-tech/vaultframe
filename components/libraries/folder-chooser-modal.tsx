@@ -113,7 +113,7 @@ export function FolderChooserModal({
           </button>
         </div>
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-4 py-4 sm:min-h-[420px] sm:px-6 sm:py-5">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-4 sm:min-h-[420px] sm:px-6 sm:py-5">
           <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Current selection</p>
             <p className="mt-2 break-all text-sm text-white">
@@ -164,7 +164,7 @@ export function FolderChooserModal({
             </button>
           </div>
 
-          <div className="mt-4 min-h-0 flex-1 overflow-hidden rounded-[24px] border border-white/10 bg-surface/80 sm:rounded-[28px]">
+          <div className="mt-4 rounded-[24px] border border-white/10 bg-surface/80 sm:rounded-[28px]">
             {loading ? (
               <div className="flex h-full items-center justify-center gap-3 text-slate-300">
                 <LoaderCircle className="h-5 w-5 animate-spin" />
@@ -182,7 +182,7 @@ export function FolderChooserModal({
                 </button>
               </div>
             ) : data?.mode === "roots" ? (
-              <div className="h-[min(52vh,calc(100dvh-24rem))] overflow-y-auto overscroll-contain p-3 [touch-action:pan-y] sm:h-full sm:min-h-0">
+              <div className="p-3 [touch-action:pan-y]">
                 {data.roots.length === 0 ? (
                   <div className="flex h-full items-center justify-center px-6 text-center">
                     <p className="max-w-lg text-sm leading-7 text-slate-400">
@@ -214,7 +214,7 @@ export function FolderChooserModal({
                 )}
               </div>
             ) : data?.mode === "folder" ? (
-              <div className="h-[min(52vh,calc(100dvh-24rem))] overflow-y-auto overscroll-contain p-3 [touch-action:pan-y] sm:h-full sm:min-h-0">
+              <div className="p-3 [touch-action:pan-y]">
                 <button
                   type="button"
                   onClick={() => setSelectedPath(data.currentPath)}
