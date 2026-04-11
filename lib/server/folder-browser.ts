@@ -1,6 +1,18 @@
 import { readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 
+const DIRECTORY_AVAILABILITY_TTL_MS = 30_000;
+const directoryAvailabilityCache = new Map<
+  string,
+  {
+    expiresAt: number;
+    value: {
+      available: boolean;
+      message: string | null;
+    };
+  }
+>();
+
 export type AllowedRoot = {
   name: string;
   path: string;
@@ -108,7 +120,24 @@ export async function validateLibraryPath(pathValue: string) {
   return currentPath;
 }
 
-export async function getDirectoryAvailability(targetPath: string): Promise<{
+export async function getDirectoryAvailability(
+  targetPath: string,
+  options?: {
+    fresh?: boolean;
+  },
+): Promise<{
+  available: boolean;
+  message: string | null;
+}> {
+  return getDirectoryAvailabilityCached(targetPath, options);
+}
+
+export async function getDirectoryAvailabilityCached(
+  targetPath: string,
+  options?: {
+    fresh?: boolean;
+  },
+): Promise<{
   available: boolean;
   message: string | null;
 }> {
@@ -121,30 +150,55 @@ export async function getDirectoryAvailability(targetPath: string): Promise<{
     };
   }
 
+  const cacheKey = path.normalize(trimmedPath);
+  const cached = directoryAvailabilityCache.get(cacheKey);
+
+  if (!options?.fresh && cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
   try {
     const directoryPath = await resolveExistingDirectory(
-      path.normalize(trimmedPath),
+      cacheKey,
       "The selected folder does not exist.",
     );
 
     await readdir(directoryPath);
 
-    return {
+    const value = {
       available: true,
       message: null,
     };
+    directoryAvailabilityCache.set(cacheKey, {
+      expiresAt: Date.now() + DIRECTORY_AVAILABILITY_TTL_MS,
+      value,
+    });
+
+    return value;
   } catch (error) {
     if (error instanceof FolderBrowserError) {
-      return {
+      const value = {
         available: false,
         message: error.message,
       };
+      directoryAvailabilityCache.set(cacheKey, {
+        expiresAt: Date.now() + DIRECTORY_AVAILABILITY_TTL_MS,
+        value,
+      });
+
+      return value;
     }
 
-    return {
+    const value = {
       available: false,
       message: "The library folder is currently unavailable.",
     };
+    directoryAvailabilityCache.set(cacheKey, {
+      expiresAt: Date.now() + DIRECTORY_AVAILABILITY_TTL_MS,
+      value,
+    });
+
+    return value;
   }
 }
 

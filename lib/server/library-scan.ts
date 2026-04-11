@@ -24,7 +24,7 @@ export async function scanLibraryById(libraryId: string) {
   }
 
   const libraryPath = await validateLibraryPath(library.path);
-  const availability = await getDirectoryAvailability(libraryPath);
+  const availability = await getDirectoryAvailability(libraryPath, { fresh: true });
 
   if (!availability.available) {
     throw new Error(availability.message || "The library folder is currently unavailable.");
@@ -305,7 +305,7 @@ export async function getLibraryScanAvailability(libraryId: string) {
   }
 
   const libraryPath = await validateLibraryPath(library.path);
-  const availability = await getDirectoryAvailability(libraryPath);
+  const availability = await getDirectoryAvailability(libraryPath, { fresh: true });
 
   if (!availability.available) {
     throw new Error(availability.message || "The library folder is currently unavailable.");
