@@ -16,7 +16,9 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedLibrary, setSelectedLibrary] = useState<LibraryRecord | undefined>(undefined);
   const [sheetKey, setSheetKey] = useState(0);
-  const hasActiveScan = libraries.some((library) => library.scanStatus === "RUNNING");
+  const hasActiveScan = libraries.some(
+    (library) => library.scanStatus === "RUNNING" || library.scanStatus === "QUEUED",
+  );
 
   useEffect(() => {
     if (!hasActiveScan) {

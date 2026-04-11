@@ -71,8 +71,8 @@ export async function scanLibraryById(libraryId: string) {
     });
   };
 
-  const files = await collectVideoFiles(libraryPath, async (currentPath, videosFound) => {
-    await persistProgress(currentPath, 0, videosFound);
+  const files = await collectVideoFiles(libraryPath, async (currentPath, videosFound, filesVisited) => {
+    await persistProgress(currentPath, filesVisited, videosFound);
   });
   const enabledTagRules = await listEnabledTagRules();
   const seenPaths: string[] = [];
@@ -343,12 +343,26 @@ async function startNextQueuedLibraryScan() {
     return;
   }
 
+  const claimedLibrary = await prisma.library.updateMany({
+    where: {
+      id: nextQueuedLibrary.id,
+      scanStatus: "QUEUED",
+    },
+    data: {
+      scanStatus: "IDLE",
+    },
+  });
+
+  if (claimedLibrary.count === 0) {
+    return;
+  }
+
   startLibraryScanInBackground(nextQueuedLibrary.id);
 }
 
 async function collectVideoFiles(
   rootPath: string,
-  onProgress?: (currentPath: string, videosFound: number) => Promise<void>,
+  onProgress?: (currentPath: string, videosFound: number, filesVisited: number) => Promise<void>,
 ) {
   const results: Array<{
     fullPath: string;
@@ -358,6 +372,7 @@ async function collectVideoFiles(
     sizeBytes: bigint | null;
   }> = [];
   const queue = [rootPath];
+  let filesVisited = 0;
 
   while (queue.length > 0) {
     const currentPath = queue.pop();
@@ -367,7 +382,7 @@ async function collectVideoFiles(
     }
 
     if (onProgress) {
-      await onProgress(currentPath, results.length);
+      await onProgress(currentPath, results.length, filesVisited);
     }
 
     let entries;
@@ -393,6 +408,8 @@ async function collectVideoFiles(
           continue;
         }
 
+        filesVisited += 1;
+
         const extension = path.extname(entry.name).toLowerCase();
 
         if (!VIDEO_EXTENSIONS.has(extension)) {
@@ -408,7 +425,7 @@ async function collectVideoFiles(
         });
 
         if (onProgress) {
-          await onProgress(fullPath, results.length);
+          await onProgress(fullPath, results.length, filesVisited);
         }
       } catch {
         continue;
