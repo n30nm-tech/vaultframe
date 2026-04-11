@@ -1,5 +1,18 @@
 # Changelog
 
+## v3.1.0 - Unreleased
+
+### Added
+
+- User-created auto-tag rules in Settings
+- Rule matching against filename, folder path, and library name
+- Automatic rule-based tag application during scans
+
+### Changed
+
+- App branding and documentation now reflect the v3.1 release
+- Settings now acts as the control surface for auto-tag rules
+
 ## v3.0.0 - Unreleased
 
 ### Added

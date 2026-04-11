@@ -57,3 +57,17 @@ model Tag {
   updatedAt  DateTime   @updatedAt
   mediaItems MediaItem[]
 }
+
+model TagRule {
+  id         String   @id @default(cuid())
+  name       String
+  target     String
+  matchMode  String   @default("CONTAINS")
+  pattern    String
+  tagName    String
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([enabled])
+}

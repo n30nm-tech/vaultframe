@@ -2,6 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { updateLibraryScanState } from "@/lib/data/libraries";
+import { listEnabledTagRules } from "@/lib/data/tag-rules";
 import {
   FolderBrowserError,
   getDirectoryAvailability,
@@ -73,6 +74,7 @@ export async function scanLibraryById(libraryId: string) {
   const files = await collectVideoFiles(libraryPath, async (currentPath, videosFound) => {
     await persistProgress(currentPath, 0, videosFound);
   });
+  const enabledTagRules = await listEnabledTagRules();
   const seenPaths: string[] = [];
   let processedCount = 0;
 
@@ -82,6 +84,16 @@ export async function scanLibraryById(libraryId: string) {
     const storyboard = await ensureStoryboardForVideo(file.fullPath);
     const storyboardPaths = storyboard.frames.map((frame) => frame.path);
     const storyboardTimestamps = storyboard.frames.map((frame) => frame.timestamp);
+    const matchedTagNames = getMatchedRuleTagNames({
+      fileName: file.fileName,
+      folderPath: file.folderPath,
+      libraryName: library.name,
+      rules: enabledTagRules,
+    });
+    const matchedTags = await Promise.all(
+      matchedTagNames.map((tagName) => ensureTag(tagName)),
+    );
+    const tagConnections = matchedTags.map((tag) => ({ id: tag.id }));
 
     const createData: Record<string, unknown> = {
       libraryId: library.id,
@@ -97,6 +109,12 @@ export async function scanLibraryById(libraryId: string) {
       durationSeconds: storyboard.durationSeconds,
       missing: false,
       lastSeenAt: now,
+      tags:
+        tagConnections.length > 0
+          ? {
+              connect: tagConnections,
+            }
+          : undefined,
     };
 
     const updateData: Record<string, unknown> = {
@@ -111,6 +129,12 @@ export async function scanLibraryById(libraryId: string) {
       durationSeconds: storyboard.durationSeconds ?? undefined,
       missing: false,
       lastSeenAt: now,
+      tags:
+        tagConnections.length > 0
+          ? {
+              connect: tagConnections,
+            }
+          : undefined,
     };
 
     await prisma.mediaItem.upsert({
@@ -397,4 +421,72 @@ async function collectVideoFiles(
 
 export function isFolderBrowserError(error: unknown) {
   return error instanceof FolderBrowserError;
+}
+
+async function ensureTag(tagName: string) {
+  const normalizedTagName = tagName.trim().replace(/\s+/g, " ").toLowerCase();
+  const prismaWithTag = prisma as typeof prisma & {
+    tag: {
+      upsert: (args: unknown) => Promise<{ id: string; name: string }>;
+    };
+  };
+
+  return prismaWithTag.tag.upsert({
+    where: {
+      name: normalizedTagName,
+    },
+    create: {
+      name: normalizedTagName,
+    },
+    update: {},
+  });
+}
+
+function getMatchedRuleTagNames({
+  fileName,
+  folderPath,
+  libraryName,
+  rules,
+}: {
+  fileName: string;
+  folderPath: string;
+  libraryName: string;
+  rules: Array<{
+    target: string;
+    matchMode: string;
+    pattern: string;
+    tagName: string;
+  }>;
+}) {
+  const values = {
+    FILE_NAME: fileName,
+    FOLDER_PATH: folderPath,
+    LIBRARY_NAME: libraryName,
+  } as const;
+
+  const matchedTags = new Set<string>();
+
+  for (const rule of rules) {
+    const candidate = values[rule.target as keyof typeof values];
+
+    if (!candidate) {
+      continue;
+    }
+
+    const haystack = candidate.toLowerCase();
+    const needle = rule.pattern.trim().toLowerCase();
+
+    if (!needle) {
+      continue;
+    }
+
+    const matches =
+      rule.matchMode === "EQUALS" ? haystack === needle : haystack.includes(needle);
+
+    if (matches) {
+      matchedTags.add(rule.tagName);
+    }
+  }
+
+  return Array.from(matchedTags);
 }
