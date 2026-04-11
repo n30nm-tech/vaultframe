@@ -10,7 +10,23 @@ import {
 } from "@/lib/server/folder-browser";
 import { ensureStoryboardForVideo, ensureThumbnailForVideo } from "@/lib/server/thumbnails";
 
-const VIDEO_EXTENSIONS = new Set([".mp4", ".mkv", ".avi", ".mov", ".wmv", ".webm", ".m4v"]);
+const VIDEO_EXTENSIONS = new Set([
+  ".mp4",
+  ".mkv",
+  ".avi",
+  ".mov",
+  ".wmv",
+  ".webm",
+  ".m4v",
+  ".ts",
+  ".m2ts",
+  ".mts",
+  ".mpg",
+  ".mpeg",
+  ".flv",
+  ".3gp",
+  ".ogv",
+]);
 const SCAN_PROGRESS_INTERVAL_MS = 1500;
 const SCAN_PROGRESS_FILE_STEP = 25;
 const SCAN_RUNNER_INTERVAL_MS = 2000;
@@ -299,16 +315,9 @@ export async function enqueueLibraryScan(libraryId: string) {
   });
 
   if (runningScan) {
-    await updateLibraryScanState(libraryId, {
-      scanStatus: "QUEUED",
-      scanQueuedAt: new Date(),
-      scanStartedAt: null,
-      scanFinishedAt: null,
-      scanCurrentPath: null,
-      scanFilesScanned: 0,
-      scanVideosFound: 0,
-      scanError: null,
-    });
+    await queueLibraryScan(libraryId);
+    ensureScanRunnerStarted();
+    void runScanCycle();
 
     return {
       started: false,
@@ -317,14 +326,14 @@ export async function enqueueLibraryScan(libraryId: string) {
     };
   }
 
-  await markLibraryScanRunning(libraryId);
+  await queueLibraryScan(libraryId);
   ensureScanRunnerStarted();
   void runScanCycle();
 
   return {
     started: true,
-    queued: false,
-    message: "Scan started. Other queued libraries will run automatically after this one.",
+    queued: true,
+    message: "Scan queued. It should start automatically in a moment.",
   };
 }
 
@@ -364,6 +373,7 @@ export function ensureScanRunnerStarted() {
   globalForScanRunner.vaultFrameScanRunnerTimer = setInterval(() => {
     void runScanCycle();
   }, SCAN_RUNNER_INTERVAL_MS);
+  void runScanCycle();
 }
 
 async function runScanCycle() {
@@ -530,6 +540,19 @@ async function markLibraryScanRunning(libraryId: string) {
     scanStatus: "RUNNING",
     scanQueuedAt: null,
     scanStartedAt: new Date(),
+    scanFinishedAt: null,
+    scanCurrentPath: null,
+    scanFilesScanned: 0,
+    scanVideosFound: 0,
+    scanError: null,
+  });
+}
+
+async function queueLibraryScan(libraryId: string) {
+  await updateLibraryScanState(libraryId, {
+    scanStatus: "QUEUED",
+    scanQueuedAt: new Date(),
+    scanStartedAt: null,
     scanFinishedAt: null,
     scanCurrentPath: null,
     scanFilesScanned: 0,
