@@ -7,6 +7,9 @@
 - Storyboard preview frame generation for videos using FFmpeg
 - Adaptive storyboard frame counts based on video duration
 - Clickable storyboard frames that start playback from the selected point
+- Folder breadcrumb labels across the media browser and detail view
+- Media duration and file-size metadata in the browser and detail panels
+- Remembered media search, filter, and sort selections across visits
 
 ### Changed
 
@@ -14,11 +17,13 @@
 - In-card video playback sizing is more phone-friendly on mobile screens
 - Media detail playback now starts at the poster size and can be expanded on demand
 - Scan progress persistence is throttled to reduce database churn on large libraries
+- App branding and documentation now reflect the v2.1 release
 
 ### Fixed
 
 - Libraries now surface storage-unavailable warnings when the mounted media path cannot be reached
 - Scan actions now stop early with a clear error when storage is offline or the library is disabled
+- Media cards and detail pages now show clearer offline and missing-state badges
 
 ## v2.0.0 - 2026-04-09
 

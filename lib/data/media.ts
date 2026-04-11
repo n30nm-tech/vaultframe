@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getDirectoryAvailability } from "@/lib/server/folder-browser";
 
 export type MediaItemRecord = {
   id: string;
@@ -22,6 +23,16 @@ export type MediaItemRecord = {
     id: string;
     name: string;
     path: string;
+    storageAvailable: boolean;
+  };
+};
+
+export type MediaBrowserItemRecord = Omit<MediaItemRecord, "library"> & {
+  library: {
+    id: string;
+    name: string;
+    path: string;
+    storageAvailable: boolean;
   };
 };
 
@@ -99,6 +110,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
           select: {
             id: true,
             name: true,
+            path: true,
           },
         },
       },
@@ -126,12 +138,32 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     prisma.mediaItem.count(),
   ]);
 
+  const libraryAvailability = new Map<string, boolean>();
+
+  await Promise.all(
+    Array.from(
+      new Map(mediaItems.map((item) => [item.library.id, item.library.path])).entries(),
+      async ([libraryId, libraryPath]) => {
+        const status = await getDirectoryAvailability(libraryPath);
+        libraryAvailability.set(libraryId, status.available);
+      },
+    ),
+  );
+
+  const enrichedMediaItems = mediaItems.map((mediaItem) => ({
+    ...mediaItem,
+    library: {
+      ...mediaItem.library,
+      storageAvailable: libraryAvailability.get(mediaItem.library.id) ?? false,
+    },
+  })) as MediaBrowserItemRecord[];
+
   return {
-    mediaItems,
+    mediaItems: enrichedMediaItems,
     libraries,
     folders: folders.map((item) => item.folderPath),
     totalCount,
-    filteredCount: mediaItems.length,
+    filteredCount: enrichedMediaItems.length,
     filters: {
       search,
       libraryId: params.libraryId ?? "",
@@ -143,7 +175,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
 }
 
 export async function getMediaItemById(id: string) {
-  return prisma.mediaItem.findUnique({
+  const mediaItem = (await prisma.mediaItem.findUnique({
     where: { id },
     include: {
       library: {
@@ -154,7 +186,21 @@ export async function getMediaItemById(id: string) {
         },
       },
     },
-  }) as Promise<MediaItemRecord | null>;
+  })) as MediaItemRecord | null;
+
+  if (!mediaItem) {
+    return null;
+  }
+
+  const availability = await getDirectoryAvailability(mediaItem.library.path);
+
+  return {
+    ...mediaItem,
+    library: {
+      ...mediaItem.library,
+      storageAvailable: availability.available,
+    },
+  } satisfies MediaItemRecord;
 }
 
 function getOrderBy(sort: MediaSort): Prisma.MediaItemOrderByWithRelationInput[] {

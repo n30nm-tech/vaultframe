@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaBrowser } from "@/components/media/media-browser";
 import { getMediaBrowserData, type MediaSort } from "@/lib/data/media";
@@ -16,12 +17,17 @@ type MediaPageProps = {
 
 export default async function MediaPage({ searchParams }: MediaPageProps) {
   const params = searchParams ? await searchParams : undefined;
+  const cookieStore = await cookies();
+  const storedFilterValue = cookieStore.get("vaultframe-media-filters")?.value;
+  const storedFilters = storedFilterValue
+    ? parseStoredMediaFilters(storedFilterValue)
+    : undefined;
   const data = await getMediaBrowserData({
-    search: params?.search,
-    libraryId: params?.libraryId,
-    missing: params?.missing,
-    folder: params?.folder,
-    sort: params?.sort,
+    search: params?.search ?? storedFilters?.search,
+    libraryId: params?.libraryId ?? storedFilters?.libraryId,
+    missing: params?.missing ?? storedFilters?.missing,
+    folder: params?.folder ?? storedFilters?.folder,
+    sort: params?.sort ?? storedFilters?.sort,
   });
 
   return (
@@ -34,4 +40,26 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
       <MediaBrowser data={data} />
     </div>
   );
+}
+
+function parseStoredMediaFilters(value: string) {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(value)) as {
+      search?: string;
+      libraryId?: string;
+      missing?: "all" | "missing" | "available";
+      folder?: string;
+      sort?: MediaSort;
+    };
+
+    return {
+      search: parsed.search ?? "",
+      libraryId: parsed.libraryId ?? "",
+      missing: parsed.missing ?? "all",
+      folder: parsed.folder ?? "",
+      sort: parsed.sort ?? "updated-desc",
+    };
+  } catch {
+    return undefined;
+  }
 }

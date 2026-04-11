@@ -9,11 +9,17 @@ import {
   Film,
   FolderTree,
   HardDrive,
+  Layers3,
   Pause,
   Play,
   Shrink,
   TriangleAlert,
 } from "lucide-react";
+import {
+  formatDuration,
+  formatFileSize,
+  getFolderBreadcrumbLabel,
+} from "@/lib/media-presentation";
 
 type PlayerSize = "small" | "medium" | "large";
 
@@ -26,9 +32,13 @@ type MediaCardPlayerProps = {
     fileName: string;
     folderPath: string;
     missing: boolean;
+    sizeBytes: bigint | null;
+    durationSeconds: number | null;
     library: {
       id: string;
       name: string;
+      path: string;
+      storageAvailable: boolean;
     };
   };
   activeMediaId: string | null;
@@ -87,6 +97,7 @@ export function MediaCardPlayer({
       ? mediaItem.storyboardPaths[hoverFrameIndex]
       : mediaItem.thumbnailPath || mediaItem.storyboardPaths[0] || null;
   const canPreviewStoryboard = !isActive && mediaItem.storyboardPaths.length > 1;
+  const folderLabel = getFolderBreadcrumbLabel(mediaItem.folderPath, mediaItem.library.path);
 
   const handlePreviewToggle = () => {
     if (!canPreviewStoryboard) {
@@ -229,12 +240,20 @@ export function MediaCardPlayer({
             {mediaItem.title?.trim() || mediaItem.fileName}
           </p>
         </div>
-        {mediaItem.missing ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">
-            <TriangleAlert className="h-3.5 w-3.5" />
-            Missing
-          </span>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {!mediaItem.library.storageAvailable ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/20 bg-rose-400/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-rose-200">
+              <HardDrive className="h-3.5 w-3.5" />
+              Offline
+            </span>
+          ) : null}
+          {mediaItem.missing ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">
+              <TriangleAlert className="h-3.5 w-3.5" />
+              Missing
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-3 space-y-2 text-xs text-slate-400 sm:mt-4 sm:space-y-3 sm:text-sm">
@@ -244,7 +263,11 @@ export function MediaCardPlayer({
         </div>
         <div className="flex items-center gap-2">
           <FolderTree className="h-4 w-4 shrink-0" />
-          <span className="truncate">{mediaItem.folderPath}</span>
+          <span className="truncate">{folderLabel}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.16em] text-slate-500 sm:text-xs">
+          <span>{formatDuration(mediaItem.durationSeconds)}</span>
+          <span>{formatFileSize(mediaItem.sizeBytes)}</span>
         </div>
       </div>
 
@@ -275,10 +298,14 @@ export function MediaCardPlayer({
         )}
 
         <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-500">
-          <span>
+          <span className="inline-flex items-center gap-1">
+            <Layers3 className="h-3.5 w-3.5" />
             {mediaItem.storyboardPaths.length > 0
-              ? `${mediaItem.storyboardPaths.length} preview frames`
-              : mediaItem.thumbnailPath
+              ? `${mediaItem.storyboardPaths.length} frames`
+              : "No storyboard"}
+          </span>
+          <span>
+            {mediaItem.thumbnailPath
                 ? "Poster ready"
                 : "Poster pending"}
           </span>

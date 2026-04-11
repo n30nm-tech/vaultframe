@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
 import type { MediaSort } from "@/lib/data/media";
 
 type MediaFilterBarProps = {
@@ -17,6 +19,7 @@ type MediaFilterBarProps = {
 };
 
 export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarProps) {
+  const router = useRouter();
   const hasActiveFilters =
     Boolean(filters.search) ||
     Boolean(filters.libraryId) ||
@@ -25,7 +28,21 @@ export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarPr
     filters.sort !== "updated-desc";
 
   return (
-    <form className="rounded-[28px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[32px] sm:p-6">
+    <form
+      className="rounded-[28px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[32px] sm:p-6"
+      onSubmit={(event) => {
+        const formData = new FormData(event.currentTarget);
+        const storedFilters = {
+          search: String(formData.get("search") ?? ""),
+          libraryId: String(formData.get("libraryId") ?? ""),
+          missing: String(formData.get("missing") ?? "all"),
+          folder: String(formData.get("folder") ?? ""),
+          sort: String(formData.get("sort") ?? "updated-desc"),
+        };
+
+        document.cookie = `vaultframe-media-filters=${encodeURIComponent(JSON.stringify(storedFilters))}; Path=/; Max-Age=2592000; SameSite=Lax`;
+      }}
+    >
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
         <Field label="Search">
           <input
@@ -105,12 +122,18 @@ export function MediaFilterBar({ filters, libraries, folders }: MediaFilterBarPr
           {hasActiveFilters ? "Filters applied to the current media library view." : "Filter scanned media records stored in PostgreSQL."}
         </p>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-          <Link
-            href="/media"
+          <button
+            type="button"
+            onClick={() => {
+              document.cookie =
+                "vaultframe-media-filters=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+              router.push("/media");
+              router.refresh();
+            }}
             className="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-medium text-slate-300 transition hover:bg-white/[0.04] hover:text-white"
           >
             Reset
-          </Link>
+          </button>
           <button
             type="submit"
             className="rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong"

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaDetailPlayer } from "@/components/media/media-detail-player";
 import { getMediaItemById } from "@/lib/data/media";
+import { formatDuration, formatFileSize, getFolderBreadcrumbLabel } from "@/lib/media-presentation";
 import { FolderTree, HardDrive, TriangleAlert } from "lucide-react";
 
 type MediaDetailPageProps = {
@@ -30,6 +31,7 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
     path,
     timestamp: mediaItem.storyboardTimestamps[index] ?? 0,
   }));
+  const folderLabel = getFolderBreadcrumbLabel(mediaItem.folderPath, mediaItem.library.path);
 
   return (
     <div>
@@ -58,15 +60,34 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
             </div>
             <div className="flex items-center gap-2">
               <FolderTree className="h-4 w-4 text-slate-500" />
+              <span>{folderLabel}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs uppercase tracking-[0.16em] text-slate-400">
+              <div className="flex flex-wrap items-center gap-4">
+                <span>{formatDuration(mediaItem.durationSeconds)}</span>
+                <span>{formatFileSize(mediaItem.sizeBytes)}</span>
+                <span>{mediaItem.extension.toUpperCase()}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <FolderTree className="h-4 w-4 text-slate-500" />
               <span className="break-all">{mediaItem.folderPath}</span>
             </div>
             <div className="break-all text-slate-400">{mediaItem.fullPath}</div>
-            {mediaItem.missing ? (
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">
-                <TriangleAlert className="h-3.5 w-3.5" />
-                Missing
-              </div>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {!mediaItem.library.storageAvailable ? (
+                <div className="inline-flex items-center gap-2 rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-rose-200">
+                  <HardDrive className="h-3.5 w-3.5" />
+                  Storage offline
+                </div>
+              ) : null}
+              {mediaItem.missing ? (
+                <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">
+                  <TriangleAlert className="h-3.5 w-3.5" />
+                  Missing
+                </div>
+              ) : null}
+            </div>
             <div className="grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-2">
               <Link
                 href={`/media?folder=${encodeURIComponent(mediaItem.folderPath)}`}
