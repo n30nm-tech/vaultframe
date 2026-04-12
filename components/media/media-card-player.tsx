@@ -124,6 +124,16 @@ export function MediaCardPlayer({
     onDeactivate(mediaItem.id);
   };
 
+  const handleActivatePlayback = () => {
+    setPlaybackError(null);
+    if (isActive) {
+      handleDeactivate();
+      return;
+    }
+
+    onActivate(mediaItem.id);
+  };
+
   return (
     <article
       className={clsx(
@@ -237,7 +247,26 @@ export function MediaCardPlayer({
               </div>
             ) : null}
             {thumbnailOnlyView && !isActive ? (
-              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+              <>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                {!mediaItem.missing ? (
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-start p-3">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleActivatePlayback();
+                      }}
+                      className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-black/85"
+                      aria-label={isActive ? "Stop video" : "Play video"}
+                    >
+                      {isActive ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      {isActive ? "Stop" : "Play"}
+                    </button>
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </button>
         ) : (
@@ -320,15 +349,7 @@ export function MediaCardPlayer({
         ) : (
           <button
             type="button"
-            onClick={() => {
-              setPlaybackError(null);
-              if (isActive) {
-                handleDeactivate();
-                return;
-              }
-
-              onActivate(mediaItem.id);
-            }}
+            onClick={handleActivatePlayback}
             className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong"
           >
             {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
