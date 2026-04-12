@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getDirectoryAvailability } from "@/lib/server/folder-browser";
+import { getStorageAvailabilityMap } from "@/lib/server/storage-status";
 
 export type MediaItemRecord = {
   id: string;
@@ -173,6 +173,11 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     }),
     prisma.mediaItem.findMany({
       distinct: ["folderPath"],
+      where: params.libraryId
+        ? ({
+            libraryId: params.libraryId,
+          } as never)
+        : undefined,
       orderBy: {
         folderPath: "asc",
       },
@@ -209,15 +214,13 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     number,
   ];
 
-  const libraryAvailability = new Map<string, boolean>();
-
-  await Promise.all(
+  const libraryAvailability = await getStorageAvailabilityMap(
     Array.from(
       new Map(mediaItems.map((item) => [item.library.id, item.library.path])).entries(),
-      async ([libraryId, libraryPath]) => {
-        const status = await getDirectoryAvailability(libraryPath);
-        libraryAvailability.set(libraryId, status.available);
-      },
+      ([id, path]) => ({
+        id,
+        path,
+      }),
     ),
   );
 
@@ -225,7 +228,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     ...mediaItem,
     library: {
       ...mediaItem.library,
-      storageAvailable: libraryAvailability.get(mediaItem.library.id) ?? false,
+      storageAvailable: libraryAvailability.get(mediaItem.library.id)?.available ?? false,
     },
   })) as MediaBrowserItemRecord[];
 
@@ -275,13 +278,18 @@ export async function getMediaItemById(id: string) {
     return null;
   }
 
-  const availability = await getDirectoryAvailability(mediaItem.library.path);
+  const availability = await getStorageAvailabilityMap([
+    {
+      id: mediaItem.library.id,
+      path: mediaItem.library.path,
+    },
+  ]);
 
   return {
     ...mediaItem,
     library: {
       ...mediaItem.library,
-      storageAvailable: availability.available,
+      storageAvailable: availability.get(mediaItem.library.id)?.available ?? false,
     },
   } satisfies MediaItemRecord;
 }

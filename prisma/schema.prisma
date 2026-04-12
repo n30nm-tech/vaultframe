@@ -49,6 +49,11 @@ model MediaItem {
 
   @@index([libraryId])
   @@index([libraryId, missing])
+  @@index([updatedAt])
+  @@index([createdAt])
+  @@index([folderPath])
+  @@index([sizeBytes])
+  @@index([libraryId, updatedAt])
 }
 
 model Tag {

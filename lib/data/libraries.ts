@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getDirectoryAvailability } from "@/lib/server/folder-browser";
+import { getStorageAvailabilityMap } from "@/lib/server/storage-status";
 
 export type LibraryRecord = {
   id: string;
@@ -46,15 +46,15 @@ export async function listLibraries(): Promise<LibraryRecord[]> {
     },
   });
 
-  const statuses = await Promise.all(
-    libraries.map(async (library) => ({
+  const statuses = await getStorageAvailabilityMap(
+    libraries.map((library) => ({
       id: library.id,
-      ...(await getDirectoryAvailability(library.path)),
+      path: library.path,
     })),
   );
 
   return libraries.map((library) => {
-    const status = statuses.find((entry) => entry.id === library.id);
+    const status = statuses.get(library.id);
     const mediaCount = mediaCounts.find((entry) => entry.libraryId === library.id);
 
     return {
