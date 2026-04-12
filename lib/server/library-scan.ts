@@ -60,6 +60,7 @@ export async function scanLibraryById(libraryId: string) {
     scanStartedAt: now,
     scanFinishedAt: null,
     scanCurrentPath: libraryPath,
+    scanTotalFiles: 0,
     scanFilesScanned: 0,
     scanVideosFound: 0,
     scanError: null,
@@ -100,6 +101,12 @@ export async function scanLibraryById(libraryId: string) {
       await persistProgress(currentPath, filesVisited, videosFound);
     },
   );
+  await updateLibraryScanState(libraryId, {
+    scanCurrentPath: libraryPath,
+    scanTotalFiles: files.length,
+    scanFilesScanned: 0,
+    scanVideosFound: 0,
+  });
   const enabledTagRules = await listEnabledTagRules();
   const seenPaths: string[] = [];
   let processedCount = 0;
@@ -247,6 +254,7 @@ export async function scanLibraryById(libraryId: string) {
     scanQueuedAt: null,
     scanFinishedAt: new Date(),
     scanCurrentPath: null,
+    scanTotalFiles: files.length,
     scanFilesScanned: processedCount,
     scanVideosFound: indexedCount,
     scanError:
@@ -527,6 +535,7 @@ async function executeScanJob(libraryId: string) {
       scanStatus: "FAILED",
       scanQueuedAt: null,
       scanFinishedAt: new Date(),
+      scanTotalFiles: 0,
       scanError: error instanceof Error ? error.message : "Scan failed.",
     });
   } finally {
@@ -542,6 +551,7 @@ async function markLibraryScanRunning(libraryId: string) {
     scanStartedAt: new Date(),
     scanFinishedAt: null,
     scanCurrentPath: null,
+    scanTotalFiles: 0,
     scanFilesScanned: 0,
     scanVideosFound: 0,
     scanError: null,
@@ -555,6 +565,7 @@ async function queueLibraryScan(libraryId: string) {
     scanStartedAt: null,
     scanFinishedAt: null,
     scanCurrentPath: null,
+    scanTotalFiles: 0,
     scanFilesScanned: 0,
     scanVideosFound: 0,
     scanError: null,

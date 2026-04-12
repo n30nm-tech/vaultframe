@@ -17,6 +17,7 @@ model Library {
   scanStartedAt DateTime?
   scanFinishedAt DateTime?
   scanCurrentPath String?
+  scanTotalFiles Int        @default(0)
   scanFilesScanned Int      @default(0)
   scanVideosFound Int       @default(0)
   scanError     String?
