@@ -1,5 +1,17 @@
 # Changelog
 
+## v3.2.0 - Unreleased
+
+### Added
+
+- Scene scrubbing on the media detail page with a selected-scene preview
+- Click-to-play from the selected storyboard scene with a dedicated action button
+
+### Changed
+
+- App branding and documentation now reflect the v3.2 release
+- Storyboard interaction on the detail page now behaves like a scrub timeline instead of a simple static grid
+
 ## v3.1.0 - Unreleased
 
 ### Added

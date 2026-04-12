@@ -28,8 +28,14 @@ export function MediaDetailPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerSize, setPlayerSize] = useState<PlayerSize>("small");
   const [seekTarget, setSeekTarget] = useState<number | null>(null);
+  const [selectedStoryboardIndex, setSelectedStoryboardIndex] = useState(0);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const selectedStoryboard =
+    storyboards.length > 0
+      ? storyboards[Math.min(selectedStoryboardIndex, storyboards.length - 1)]
+      : null;
 
   const playerWidthClass =
     playerSize === "large"
@@ -41,6 +47,14 @@ export function MediaDetailPlayer({
     setSeekTarget(timestamp);
     setIsPlaying(true);
   };
+
+  useEffect(() => {
+    if (selectedStoryboardIndex <= storyboards.length - 1) {
+      return;
+    }
+
+    setSelectedStoryboardIndex(0);
+  }, [selectedStoryboardIndex, storyboards.length]);
 
   useEffect(() => {
     if (!isPlaying || seekTarget === null || !videoRef.current) {
@@ -142,7 +156,13 @@ export function MediaDetailPlayer({
 
         {storyboards.length > 0 ? (
           <div className="border-t border-white/10 pt-4">
-            <StoryboardGrid storyboards={storyboards} title={title} onSelect={handleStoryboardSelect} />
+            <StoryboardScrubber
+              storyboards={storyboards}
+              title={title}
+              selectedIndex={selectedStoryboardIndex}
+              onSelectIndex={setSelectedStoryboardIndex}
+              onPlayTimestamp={handleStoryboardSelect}
+            />
           </div>
         ) : null}
       </div>
@@ -181,39 +201,114 @@ export function MediaDetailPlayer({
 
       {storyboards.length > 0 ? (
         <div className="border-t border-white/10 px-4 py-4">
-          <StoryboardGrid storyboards={storyboards} title={title} onSelect={handleStoryboardSelect} />
+          <StoryboardScrubber
+            storyboards={storyboards}
+            title={title}
+            selectedIndex={selectedStoryboardIndex}
+            onSelectIndex={setSelectedStoryboardIndex}
+            onPlayTimestamp={handleStoryboardSelect}
+          />
         </div>
       ) : null}
     </div>
   );
 }
 
-function StoryboardGrid({
+function StoryboardScrubber({
   storyboards,
   title,
-  onSelect,
+  selectedIndex,
+  onSelectIndex,
+  onPlayTimestamp,
 }: {
   storyboards: Array<{
     path: string;
     timestamp: number;
   }>;
   title: string;
-  onSelect: (timestamp: number) => void;
+  selectedIndex: number;
+  onSelectIndex: (index: number) => void;
+  onPlayTimestamp: (timestamp: number) => void;
 }) {
+  const selectedStoryboard = storyboards[selectedIndex] ?? storyboards[0];
+
   return (
-    <>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-        Storyboard Preview
-      </p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          Scene Scrubbing
+        </p>
+        {selectedStoryboard ? (
+          <button
+            type="button"
+            onClick={() => onPlayTimestamp(selectedStoryboard.timestamp)}
+            className="inline-flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent transition hover:bg-accent/20"
+          >
+            <Play className="h-3.5 w-3.5" />
+            Play From {formatTimestamp(selectedStoryboard.timestamp)}
+          </button>
+        ) : null}
+      </div>
+
+      {selectedStoryboard ? (
+        <button
+          type="button"
+          onClick={() => onPlayTimestamp(selectedStoryboard.timestamp)}
+          className="group block w-full text-left"
+        >
+          <div className="relative aspect-video overflow-hidden rounded-[24px] border border-white/10 bg-black/30 transition group-hover:border-accent/30">
+            <Image
+              src={selectedStoryboard.path}
+              alt={`${title} scrub preview`}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-400">
+            <span>Selected scene</span>
+            <span>{formatTimestamp(selectedStoryboard.timestamp)}</span>
+          </div>
+        </button>
+      ) : null}
+
+      {storyboards.length > 1 ? (
+        <div className="space-y-2">
+          <input
+            type="range"
+            min={0}
+            max={storyboards.length - 1}
+            step={1}
+            value={selectedIndex}
+            onChange={(event) => onSelectIndex(Number(event.target.value))}
+            className="w-full accent-[rgb(125,211,252)]"
+          />
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.16em] text-slate-500">
+            <span>Start</span>
+            <span>
+              Scene {selectedIndex + 1} of {storyboards.length}
+            </span>
+            <span>End</span>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {storyboards.map((storyboard, index) => (
           <button
             key={storyboard.path}
             type="button"
-            onClick={() => onSelect(storyboard.timestamp)}
+            onClick={() => onSelectIndex(index)}
             className="group text-left"
           >
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black/30 transition group-hover:border-accent/30">
+            <div
+              className={clsx(
+                "relative aspect-video overflow-hidden rounded-2xl border bg-black/30 transition",
+                index === selectedIndex
+                  ? "border-accent/50 ring-1 ring-accent/40"
+                  : "border-white/10 group-hover:border-accent/30",
+              )}
+            >
               <Image
                 src={storyboard.path}
                 alt={`${title} frame ${index + 1}`}
@@ -228,7 +323,7 @@ function StoryboardGrid({
           </button>
         ))}
       </div>
-    </>
+    </div>
   );
 }
 

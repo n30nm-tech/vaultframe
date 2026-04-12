@@ -1,8 +1,8 @@
-# VaultFrame v3.1
+# VaultFrame v3.2
 
-VaultFrame v3.1 is a self-hosted media library app built with Next.js, TypeScript, Tailwind, Prisma, PostgreSQL, and Docker Compose.
+VaultFrame v3.2 is a self-hosted media library app built with Next.js, TypeScript, Tailwind, Prisma, PostgreSQL, and Docker Compose.
 
-See [CHANGELOG.md](./CHANGELOG.md) for the v3.1 change summary.
+See [CHANGELOG.md](./CHANGELOG.md) for the v3.2 change summary.
 
 ## What It Does
 
