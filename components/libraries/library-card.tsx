@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import { AlertTriangle, CalendarDays, Folder, ScanSearch, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarDays, Folder, HardDrive, ScanSearch, Trash2 } from "lucide-react";
 import { deleteLibraryAction, toggleLibraryEnabledAction } from "@/app/libraries/actions";
 import { ScanLibraryForm } from "@/components/libraries/scan-library-form";
 import type { LibraryRecord } from "@/lib/data/libraries";
@@ -58,11 +58,16 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-3">
+      <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Stat
           icon={ScanSearch}
           label="Last scanned"
           value={library.lastScannedAt ? formatDateTime(library.lastScannedAt) : "Never"}
+        />
+        <Stat
+          icon={HardDrive}
+          label="Files in library"
+          value={formatCount(library.mediaFileCount)}
         />
         <Stat icon={CalendarDays} label="Created" value={formatDate(library.createdAt)} />
         <ToggleForm id={library.id} enabled={library.enabled} />
@@ -97,6 +102,16 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
       {library.scanStatus === "FAILED" && library.scanError ? (
         <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-4 text-sm text-rose-200">
           {library.scanError}
+        </div>
+      ) : null}
+
+      {library.scanStatus === "IDLE" &&
+      !library.scanError &&
+      Boolean(library.lastScannedAt) &&
+      library.scanFilesScanned === 0 &&
+      library.scanVideosFound === 0 ? (
+        <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-4 text-sm text-amber-100">
+          No videos were found in this folder on the last scan.
         </div>
       ) : null}
 
@@ -216,4 +231,8 @@ function formatDateTime(value: Date) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatCount(value: number) {
+  return new Intl.NumberFormat("en-GB").format(value);
 }

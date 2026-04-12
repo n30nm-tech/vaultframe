@@ -7,6 +7,7 @@ export type LibraryRecord = {
   name: string;
   path: string;
   enabled: boolean;
+  mediaFileCount: number;
   scanStatus: string;
   scanQueuedAt: Date | null;
   scanStartedAt: Date | null;
@@ -34,6 +35,15 @@ export async function listLibraries(): Promise<LibraryRecord[]> {
       createdAt: "desc",
     },
   });
+  const mediaCounts = await prisma.mediaItem.groupBy({
+    by: ["libraryId"],
+    where: {
+      missing: false,
+    },
+    _count: {
+      _all: true,
+    },
+  });
 
   const statuses = await Promise.all(
     libraries.map(async (library) => ({
@@ -44,9 +54,11 @@ export async function listLibraries(): Promise<LibraryRecord[]> {
 
   return libraries.map((library) => {
     const status = statuses.find((entry) => entry.id === library.id);
+    const mediaCount = mediaCounts.find((entry) => entry.libraryId === library.id);
 
     return {
       ...library,
+      mediaFileCount: mediaCount?._count._all ?? 0,
       storageAvailable: status?.available ?? false,
       storageMessage: status?.message ?? "The library folder is currently unavailable.",
     };
