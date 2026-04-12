@@ -46,6 +46,7 @@ type MediaCardPlayerProps = {
     };
   };
   activeMediaId: string | null;
+  thumbnailOnlyView?: boolean;
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
 };
@@ -53,6 +54,7 @@ type MediaCardPlayerProps = {
 export function MediaCardPlayer({
   mediaItem,
   activeMediaId,
+  thumbnailOnlyView = false,
   onActivate,
   onDeactivate,
 }: MediaCardPlayerProps) {
@@ -124,14 +126,20 @@ export function MediaCardPlayer({
 
   return (
     <article
-      className={`rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel transition sm:rounded-[28px] ${cardSpanClass}`}
+      className={clsx(
+        "transition",
+        cardSpanClass,
+        thumbnailOnlyView && !isActive
+          ? "overflow-hidden rounded-[22px] border border-white/10 bg-surface/60 p-0 shadow-panel sm:rounded-[24px]"
+          : "rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[28px]",
+      )}
     >
-      <div className={clsx(isActive ? "space-y-4" : "flex items-start gap-3 sm:block")}>
+      <div className={clsx(isActive ? "space-y-4" : thumbnailOnlyView ? "" : "flex items-start gap-3 sm:block")}>
       <div
         ref={frameRef}
         className={clsx(
           "overflow-hidden rounded-[24px] border border-white/10 bg-black/40",
-          isActive ? "" : "w-36 shrink-0 sm:w-auto",
+          isActive ? "" : thumbnailOnlyView ? "aspect-[3/4] rounded-none border-0" : "w-36 shrink-0 sm:w-auto",
         )}
         onMouseEnter={() => {
           if (canPreviewStoryboard) {
@@ -204,7 +212,8 @@ export function MediaCardPlayer({
             onClick={handlePreviewToggle}
             disabled={!canPreviewStoryboard}
             className={clsx(
-              "relative block h-24 w-full text-left sm:h-auto sm:aspect-video",
+              "relative block w-full text-left",
+              thumbnailOnlyView ? "aspect-[3/4]" : "h-24 sm:h-auto sm:aspect-video",
               canPreviewStoryboard ? "cursor-pointer" : "cursor-default",
             )}
             aria-label={
@@ -227,9 +236,17 @@ export function MediaCardPlayer({
                 <span>{mediaItem.storyboardPaths.length} frames</span>
               </div>
             ) : null}
+            {thumbnailOnlyView && !isActive ? (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+            ) : null}
           </button>
         ) : (
-          <div className="flex h-24 items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02] sm:h-auto sm:aspect-video">
+          <div
+            className={clsx(
+              "flex items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]",
+              thumbnailOnlyView ? "aspect-[3/4]" : "h-24 sm:h-auto sm:aspect-video",
+            )}
+          >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent sm:h-16 sm:w-16 sm:rounded-3xl">
               <Film className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
@@ -237,6 +254,7 @@ export function MediaCardPlayer({
         )}
       </div>
 
+      {!thumbnailOnlyView || isActive ? (
       <div className={clsx("min-w-0 flex-1", isActive ? "" : "sm:mt-4")}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -336,6 +354,7 @@ export function MediaCardPlayer({
         </div>
       </div>
       </div>
+      ) : null}
       </div>
     </article>
   );

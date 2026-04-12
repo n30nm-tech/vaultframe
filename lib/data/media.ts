@@ -54,6 +54,8 @@ export type MediaSort =
   | "size-desc"
   | "size-asc";
 
+export type MediaViewMode = "details" | "thumbnails";
+
 export type MediaQueryParams = {
   search?: string;
   libraryId?: string;
@@ -61,6 +63,7 @@ export type MediaQueryParams = {
   folder?: string;
   tag?: string;
   sort?: MediaSort;
+  view?: MediaViewMode;
 };
 
 export async function getMediaBrowserData(params: MediaQueryParams) {
@@ -74,6 +77,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
   const tag = params.tag?.trim() ?? "";
   const missing = params.missing ?? "all";
   const sort = params.sort ?? "updated-desc";
+  const view = params.view ?? "details";
 
   const where: Record<string, unknown> = {
     ...(params.libraryId ? { libraryId: params.libraryId } : {}),
@@ -239,6 +243,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       folder,
       tag,
       sort,
+      view,
     },
   };
 }

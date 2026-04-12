@@ -15,6 +15,7 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
   const hasMedia = data.totalCount > 0;
   const hasResults = data.filteredCount > 0;
   const hasLibraries = data.libraries.length > 0;
+  const thumbnailOnlyView = data.filters.view === "thumbnails";
 
   return (
     <div className="space-y-6">
@@ -52,12 +53,19 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
             </p>
           </div>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <section
+            className={
+              thumbnailOnlyView
+                ? "grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
+                : "grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+            }
+          >
             {data.mediaItems.map((mediaItem) => (
               <MediaCardPlayer
                 key={mediaItem.id}
                 mediaItem={mediaItem}
                 activeMediaId={activeMediaId}
+                thumbnailOnlyView={thumbnailOnlyView}
                 onActivate={(id) => setActiveMediaId(id)}
                 onDeactivate={(id) =>
                   setActiveMediaId((current) => (current === id ? null : current))

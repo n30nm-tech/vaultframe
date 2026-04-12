@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { MediaSort } from "@/lib/data/media";
+import type { MediaSort, MediaViewMode } from "@/lib/data/media";
 
 type MediaFilterBarProps = {
   filters: {
@@ -11,6 +11,7 @@ type MediaFilterBarProps = {
     folder: string;
     tag: string;
     sort: MediaSort;
+    view: MediaViewMode;
   };
   libraries: Array<{
     id: string;
@@ -28,7 +29,8 @@ export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilte
     filters.missing !== "all" ||
     Boolean(filters.folder) ||
     Boolean(filters.tag) ||
-    filters.sort !== "updated-desc";
+    filters.sort !== "updated-desc" ||
+    filters.view !== "details";
 
   return (
     <form
@@ -42,12 +44,13 @@ export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilte
           folder: String(formData.get("folder") ?? ""),
           tag: String(formData.get("tag") ?? ""),
           sort: String(formData.get("sort") ?? "updated-desc"),
+          view: String(formData.get("view") ?? "details"),
         };
 
         document.cookie = `vaultframe-media-filters=${encodeURIComponent(JSON.stringify(storedFilters))}; Path=/; Max-Age=2592000; SameSite=Lax`;
       }}
     >
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto]">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr_1fr]">
         <Field label="Search">
           <input
             name="search"
@@ -132,6 +135,17 @@ export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilte
             <option value="folder-asc">Folder A-Z</option>
             <option value="size-desc">Largest first</option>
             <option value="size-asc">Smallest first</option>
+          </select>
+        </Field>
+
+        <Field label="View">
+          <select
+            name="view"
+            defaultValue={filters.view}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+          >
+            <option value="details">Detailed cards</option>
+            <option value="thumbnails">Thumbnail only</option>
           </select>
         </Field>
       </div>
