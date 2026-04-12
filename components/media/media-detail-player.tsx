@@ -32,11 +32,6 @@ export function MediaDetailPlayer({
   const frameRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const selectedStoryboard =
-    storyboards.length > 0
-      ? storyboards[Math.min(selectedStoryboardIndex, storyboards.length - 1)]
-      : null;
-
   const playerWidthClass =
     playerSize === "large"
       ? "max-w-none"

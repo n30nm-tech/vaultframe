@@ -144,12 +144,20 @@ export function MediaCardPlayer({
           : "rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[28px]",
       )}
     >
-      <div className={clsx(isActive ? "space-y-4" : thumbnailOnlyView ? "" : "flex items-start gap-3 sm:block")}>
+      <div
+        className={clsx(
+          isActive ? "space-y-4" : thumbnailOnlyView ? "" : "space-y-3 sm:block",
+        )}
+      >
       <div
         ref={frameRef}
         className={clsx(
           "overflow-hidden rounded-[24px] border border-white/10 bg-black/40",
-          isActive ? "" : thumbnailOnlyView ? "aspect-[3/4] rounded-none border-0" : "w-36 shrink-0 sm:w-auto",
+          isActive
+            ? ""
+            : thumbnailOnlyView
+              ? "aspect-[3/4] rounded-none border-0"
+              : "aspect-video w-full",
         )}
         onMouseEnter={() => {
           if (canPreviewStoryboard) {
@@ -223,7 +231,7 @@ export function MediaCardPlayer({
             disabled={!canPreviewStoryboard}
             className={clsx(
               "relative block w-full text-left",
-              thumbnailOnlyView ? "aspect-[3/4]" : "h-24 sm:h-auto sm:aspect-video",
+              thumbnailOnlyView ? "aspect-[3/4]" : "aspect-video",
               canPreviewStoryboard ? "cursor-pointer" : "cursor-default",
             )}
             aria-label={
@@ -273,7 +281,7 @@ export function MediaCardPlayer({
           <div
             className={clsx(
               "flex items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]",
-              thumbnailOnlyView ? "aspect-[3/4]" : "h-24 sm:h-auto sm:aspect-video",
+              thumbnailOnlyView ? "aspect-[3/4]" : "aspect-video",
             )}
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent sm:h-16 sm:w-16 sm:rounded-3xl">
@@ -284,7 +292,7 @@ export function MediaCardPlayer({
       </div>
 
       {!thumbnailOnlyView || isActive ? (
-      <div className={clsx("min-w-0 flex-1", isActive ? "" : "sm:mt-4")}>
+      <div className={clsx("min-w-0 flex-1", isActive ? "" : "mt-1 sm:mt-4")}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="break-words text-xs text-slate-400 sm:text-sm">
