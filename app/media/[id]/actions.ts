@@ -130,3 +130,7 @@ export async function setMediaPosterFromStoryboardAction(
     message: "Poster updated from storyboard frame.",
   };
 }
+
+export async function setMediaPosterFromStoryboardFormAction(formData: FormData) {
+  await setMediaPosterFromStoryboardAction(initialPosterState, formData);
+}

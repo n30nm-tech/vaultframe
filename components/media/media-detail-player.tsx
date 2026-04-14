@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import clsx from "clsx";
 import { Check, Expand, Film, ImagePlus, Play, TriangleAlert } from "lucide-react";
-import { setMediaPosterFromStoryboardAction, type MediaPosterActionState } from "@/app/media/[id]/actions";
+import { setMediaPosterFromStoryboardFormAction } from "@/app/media/[id]/actions";
 
 type PlayerSize = "small" | "medium" | "large";
 
@@ -27,14 +27,10 @@ export function MediaDetailPlayer({
   missing,
   storyboards,
 }: MediaDetailPlayerProps) {
-  const [posterState, posterAction] = useActionState(setMediaPosterFromStoryboardAction, {
-    success: false,
-  } satisfies MediaPosterActionState);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerSize, setPlayerSize] = useState<PlayerSize>("small");
   const [seekTarget, setSeekTarget] = useState<number | null>(null);
   const [selectedStoryboardIndex, setSelectedStoryboardIndex] = useState(0);
-  const [currentPosterPath, setCurrentPosterPath] = useState(posterPath);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -50,28 +46,12 @@ export function MediaDetailPlayer({
   };
 
   useEffect(() => {
-    setCurrentPosterPath(posterPath);
-  }, [posterPath]);
-
-  useEffect(() => {
     if (selectedStoryboardIndex <= storyboards.length - 1) {
       return;
     }
 
     setSelectedStoryboardIndex(0);
   }, [selectedStoryboardIndex, storyboards.length]);
-
-  useEffect(() => {
-    if (!posterState.success) {
-      return;
-    }
-
-    const selectedStoryboard = storyboards[selectedStoryboardIndex] ?? storyboards[0];
-
-    if (selectedStoryboard) {
-      setCurrentPosterPath(selectedStoryboard.path);
-    }
-  }, [posterState.success, selectedStoryboardIndex, storyboards]);
 
   useEffect(() => {
     if (!isPlaying || seekTarget === null || !videoRef.current) {
@@ -136,7 +116,7 @@ export function MediaDetailPlayer({
             <video
               ref={videoRef}
               src={`/api/media/${mediaId}`}
-              poster={currentPosterPath ?? undefined}
+              poster={posterPath ?? undefined}
               controls
               autoPlay
               playsInline
@@ -178,9 +158,7 @@ export function MediaDetailPlayer({
               mediaId={mediaId}
               storyboards={storyboards}
               title={title}
-              posterPath={currentPosterPath}
-              posterState={posterState}
-              posterAction={posterAction}
+              posterPath={posterPath}
               selectedIndex={selectedStoryboardIndex}
               onSelectIndex={setSelectedStoryboardIndex}
               onPlayTimestamp={handleStoryboardSelect}
@@ -201,8 +179,8 @@ export function MediaDetailPlayer({
         }}
         className="group relative block aspect-video w-full overflow-hidden bg-black text-left"
       >
-        {currentPosterPath ? (
-          <Image src={currentPosterPath} alt={title} fill unoptimized className="object-cover transition duration-300 group-hover:scale-[1.02]" />
+        {posterPath ? (
+          <Image src={posterPath} alt={title} fill unoptimized className="object-cover transition duration-300 group-hover:scale-[1.02]" />
         ) : (
           <div className="flex h-full items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
             <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-accent/10 text-accent">
@@ -227,9 +205,7 @@ export function MediaDetailPlayer({
             mediaId={mediaId}
             storyboards={storyboards}
             title={title}
-            posterPath={currentPosterPath}
-            posterState={posterState}
-            posterAction={posterAction}
+            posterPath={posterPath}
             selectedIndex={selectedStoryboardIndex}
             onSelectIndex={setSelectedStoryboardIndex}
             onPlayTimestamp={handleStoryboardSelect}
@@ -245,8 +221,6 @@ function StoryboardScrubber({
   storyboards,
   title,
   posterPath,
-  posterState,
-  posterAction,
   selectedIndex,
   onSelectIndex,
   onPlayTimestamp,
@@ -258,8 +232,6 @@ function StoryboardScrubber({
   }>;
   title: string;
   posterPath: string | null;
-  posterState: MediaPosterActionState;
-  posterAction: (payload: FormData) => void;
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
   onPlayTimestamp: (timestamp: number) => void;
@@ -285,7 +257,7 @@ function StoryboardScrubber({
             </button>
           ) : null}
           {selectedStoryboard ? (
-            <form action={posterAction}>
+            <form action={setMediaPosterFromStoryboardFormAction}>
               <input type="hidden" name="mediaItemId" value={mediaId} />
               <input type="hidden" name="storyboardPath" value={selectedStoryboard.path} />
               <SetPosterButton isCurrentPoster={selectedIsPoster} />
@@ -311,9 +283,6 @@ function StoryboardScrubber({
           </div>
         </div>
       ) : null}
-
-      {posterState.error ? <p className="text-sm text-rose-300">{posterState.error}</p> : null}
-      {posterState.message ? <p className="text-sm text-emerald-300">{posterState.message}</p> : null}
 
       {storyboards.length > 1 ? (
         <div className="space-y-2">
