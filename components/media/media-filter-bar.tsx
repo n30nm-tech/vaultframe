@@ -1,7 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { MediaSort, MediaViewMode } from "@/lib/data/media";
+import type {
+  MediaSort,
+  MediaThumbnailBadgeMode,
+  MediaThumbnailDensity,
+  MediaViewMode,
+} from "@/lib/data/media";
 
 type MediaFilterBarProps = {
   filters: {
@@ -12,6 +17,8 @@ type MediaFilterBarProps = {
     tag: string;
     sort: MediaSort;
     view: MediaViewMode;
+    thumbnailDensity: MediaThumbnailDensity;
+    thumbnailBadge: MediaThumbnailBadgeMode;
     pageSize: number;
   };
   libraries: Array<{
@@ -39,6 +46,8 @@ export function MediaFilterBar({
     Boolean(filters.tag) ||
     filters.sort !== "updated-desc" ||
     filters.view !== "details" ||
+    filters.thumbnailDensity !== "standard" ||
+    filters.thumbnailBadge !== "library" ||
     filters.pageSize !== 100;
 
   return (
@@ -54,13 +63,15 @@ export function MediaFilterBar({
           tag: String(formData.get("tag") ?? ""),
           sort: String(formData.get("sort") ?? "updated-desc"),
           view: String(formData.get("view") ?? "details"),
+          thumbnailDensity: String(formData.get("thumbnailDensity") ?? "standard"),
+          thumbnailBadge: String(formData.get("thumbnailBadge") ?? "library"),
           pageSize: Number(formData.get("pageSize") ?? 100),
         };
 
         document.cookie = `vaultframe-media-filters=${encodeURIComponent(JSON.stringify(storedFilters))}; Path=/; Max-Age=2592000; SameSite=Lax`;
       }}
     >
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr_1fr_0.8fr]">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.3fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_0.8fr]">
         <Field label="Search">
           <input
             name="search"
@@ -168,6 +179,34 @@ export function MediaFilterBar({
           >
             <option value="details">Detailed cards</option>
             <option value="thumbnails">Thumbnail only</option>
+          </select>
+        </Field>
+
+        <Field label="Thumb size">
+          <select
+            name="thumbnailDensity"
+            defaultValue={filters.thumbnailDensity}
+            onChange={(event) => {
+              event.currentTarget.form?.requestSubmit();
+            }}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+          >
+            <option value="standard">Standard</option>
+            <option value="compact">Compact</option>
+          </select>
+        </Field>
+
+        <Field label="Thumb badge">
+          <select
+            name="thumbnailBadge"
+            defaultValue={filters.thumbnailBadge}
+            onChange={(event) => {
+              event.currentTarget.form?.requestSubmit();
+            }}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+          >
+            <option value="library">Library</option>
+            <option value="frames">Frames</option>
           </select>
         </Field>
 

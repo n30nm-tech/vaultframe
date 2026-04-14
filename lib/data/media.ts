@@ -55,6 +55,8 @@ export type MediaSort =
   | "size-asc";
 
 export type MediaViewMode = "details" | "thumbnails";
+export type MediaThumbnailDensity = "standard" | "compact";
+export type MediaThumbnailBadgeMode = "library" | "frames";
 
 export type MediaQueryParams = {
   search?: string;
@@ -64,6 +66,8 @@ export type MediaQueryParams = {
   tag?: string;
   sort?: MediaSort;
   view?: MediaViewMode;
+  thumbnailDensity?: MediaThumbnailDensity;
+  thumbnailBadge?: MediaThumbnailBadgeMode;
   page?: number;
   pageSize?: number;
 };
@@ -83,6 +87,8 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
   const missing = params.missing ?? "all";
   const sort = params.sort ?? "updated-desc";
   const view = params.view ?? "details";
+  const thumbnailDensity = params.thumbnailDensity ?? "standard";
+  const thumbnailBadge = params.thumbnailBadge ?? "library";
   const requestedPageSize = params.pageSize ?? DEFAULT_MEDIA_PAGE_SIZE;
   const pageSize = ALLOWED_MEDIA_PAGE_SIZES.includes(
     requestedPageSize as (typeof ALLOWED_MEDIA_PAGE_SIZES)[number],
@@ -271,6 +277,8 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       tag,
       sort,
       view,
+      thumbnailDensity,
+      thumbnailBadge,
       pageSize,
     },
   };

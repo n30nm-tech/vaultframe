@@ -18,6 +18,7 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
   const hasResults = data.filteredCount > 0;
   const hasLibraries = data.libraries.length > 0;
   const thumbnailOnlyView = data.filters.view === "thumbnails";
+  const compactDensity = data.filters.thumbnailDensity === "compact";
   const rangeStart = hasResults ? (data.currentPage - 1) * data.pageSize + 1 : 0;
   const rangeEnd = hasResults ? rangeStart + data.visibleCount - 1 : 0;
 
@@ -31,6 +32,12 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
     if (data.filters.tag) query.set("tag", data.filters.tag);
     if (data.filters.sort !== "updated-desc") query.set("sort", data.filters.sort);
     if (data.filters.view !== "details") query.set("view", data.filters.view);
+    if (data.filters.thumbnailDensity !== "standard") {
+      query.set("thumbnailDensity", data.filters.thumbnailDensity);
+    }
+    if (data.filters.thumbnailBadge !== "library") {
+      query.set("thumbnailBadge", data.filters.thumbnailBadge);
+    }
     if (data.filters.pageSize !== 100) query.set("pageSize", String(data.filters.pageSize));
     if (page > 1) query.set("page", String(page));
 
@@ -82,8 +89,12 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
           <section
             className={
               thumbnailOnlyView
-                ? "grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
-                : "grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                ? compactDensity
+                  ? "grid gap-2 grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
+                  : "grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
+                : compactDensity
+                  ? "grid gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+                  : "grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
             }
           >
             {data.mediaItems.map((mediaItem) => (
@@ -92,6 +103,8 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
                 mediaItem={mediaItem}
                 activeMediaId={activeMediaId}
                 thumbnailOnlyView={thumbnailOnlyView}
+                compactDensity={compactDensity}
+                thumbnailBadgeMode={data.filters.thumbnailBadge}
                 onActivate={(id) => setActiveMediaId(id)}
                 onDeactivate={(id) =>
                   setActiveMediaId((current) => (current === id ? null : current))

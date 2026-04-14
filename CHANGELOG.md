@@ -1,5 +1,18 @@
 # Changelog
 
+## v3.3.0 - Unreleased
+
+### Added
+
+- Compact thumbnail sizing so more media fits per row in both detailed and thumbnail views
+- Thumbnail badge mode selection between library name and storyboard frame count
+- Panic blur mode that can be armed from the header and triggered by the next keypress
+
+### Changed
+
+- App branding now reflects the v3.3 release
+- Media filter controls now include thumbnail density and thumbnail badge display options
+
 ## v3.2.0 - Unreleased
 
 ### Added

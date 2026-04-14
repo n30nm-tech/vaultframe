@@ -4,17 +4,45 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { Film, Menu, Search, Shield, X } from "lucide-react";
+import { EyeOff, Film, Menu, Search, Shield, X } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { navigationItems } from "@/lib/navigation";
 
 export function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [panicBlurActive, setPanicBlurActive] = useState(false);
+  const [panicArmed, setPanicArmed] = useState(false);
 
   useEffect(() => {
     setMobileNavOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPanicArmed(false);
+        setPanicBlurActive(false);
+        return;
+      }
+
+      if (!panicArmed) {
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      setPanicBlurActive(true);
+      setPanicArmed(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [panicArmed]);
 
   return (
     <div className="min-h-screen bg-background bg-hero-glow text-foreground">
@@ -44,13 +72,39 @@ export function AppShell({ children }: PropsWithChildren) {
                       VaultFrame control center
                     </h1>
                     <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent sm:text-[11px]">
-                      v3.2
+                      v3.3
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (panicBlurActive) {
+                      setPanicBlurActive(false);
+                      setPanicArmed(false);
+                      return;
+                    }
+
+                    setPanicArmed((current) => !current);
+                  }}
+                  className={clsx(
+                    "inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm transition",
+                    panicBlurActive
+                      ? "border-rose-500/30 bg-rose-500/15 text-rose-100"
+                      : panicArmed
+                        ? "border-amber-400/30 bg-amber-400/15 text-amber-100"
+                        : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05] hover:text-white",
+                  )}
+                >
+                  <EyeOff className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {panicBlurActive ? "Clear Panic Blur" : panicArmed ? "Press any key" : "Arm Panic Blur"}
+                  </span>
+                </button>
+
                 <div className="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-1 lg:flex">
                   {navigationItems.map((item) => {
                     const isActive =
@@ -81,7 +135,15 @@ export function AppShell({ children }: PropsWithChildren) {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-5 pb-24 sm:px-6 sm:py-6 sm:pb-6 lg:px-8 lg:py-8">{children}</main>
+          <main
+            className={clsx(
+              "flex-1 px-4 py-5 pb-24 sm:px-6 sm:py-6 sm:pb-6 lg:px-8 lg:py-8",
+              panicBlurActive &&
+                "[&_img]:blur-2xl [&_img]:brightness-75 [&_img]:transition [&_video]:blur-2xl [&_video]:brightness-75 [&_video]:transition",
+            )}
+          >
+            {children}
+          </main>
         </div>
       </div>
 
@@ -99,7 +161,7 @@ export function AppShell({ children }: PropsWithChildren) {
                 <div className="flex items-center gap-2">
                   <p className="text-lg font-semibold tracking-tight text-white">VaultFrame</p>
                   <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-                    v3.2
+                    v3.3
                   </span>
                 </div>
                 <p className="text-sm text-slate-400">Self-hosted media library</p>
@@ -158,7 +220,7 @@ function ShellNav({ pathname }: { pathname: string }) {
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold tracking-tight">VaultFrame</p>
             <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-              v3.2
+              v3.3
             </span>
           </div>
           <p className="text-sm text-slate-400">Self-hosted media library</p>

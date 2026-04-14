@@ -47,6 +47,8 @@ type MediaCardPlayerProps = {
   };
   activeMediaId: string | null;
   thumbnailOnlyView?: boolean;
+  compactDensity?: boolean;
+  thumbnailBadgeMode?: "library" | "frames";
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
 };
@@ -55,6 +57,8 @@ export function MediaCardPlayer({
   mediaItem,
   activeMediaId,
   thumbnailOnlyView = false,
+  compactDensity = false,
+  thumbnailBadgeMode = "library",
   onActivate,
   onDeactivate,
 }: MediaCardPlayerProps) {
@@ -231,7 +235,13 @@ export function MediaCardPlayer({
             disabled={!canPreviewStoryboard}
             className={clsx(
               "relative block w-full text-left",
-              thumbnailOnlyView ? "aspect-[3/4]" : "aspect-video",
+              thumbnailOnlyView
+                ? compactDensity
+                  ? "aspect-[3/4]"
+                  : "aspect-[3/4]"
+                : compactDensity
+                  ? "aspect-[16/8.5]"
+                  : "aspect-video",
               canPreviewStoryboard ? "cursor-pointer" : "cursor-default",
             )}
             aria-label={
@@ -251,7 +261,11 @@ export function MediaCardPlayer({
             />
             {canPreviewStoryboard ? (
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-end bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white sm:text-xs">
-                <span>{mediaItem.storyboardPaths.length} frames</span>
+                <span>
+                  {thumbnailBadgeMode === "frames"
+                    ? `${mediaItem.storyboardPaths.length} frames`
+                    : mediaItem.library.name}
+                </span>
               </div>
             ) : null}
             {thumbnailOnlyView && !isActive ? (
@@ -292,7 +306,7 @@ export function MediaCardPlayer({
       </div>
 
       {!thumbnailOnlyView || isActive ? (
-      <div className={clsx("min-w-0 flex-1", isActive ? "" : "mt-1 sm:mt-4")}>
+      <div className={clsx("min-w-0 flex-1", isActive ? "" : compactDensity ? "mt-1 sm:mt-2" : "mt-1 sm:mt-4")}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="break-words text-xs text-slate-400 sm:text-sm">
@@ -315,7 +329,7 @@ export function MediaCardPlayer({
         </div>
       </div>
 
-      <div className="mt-3 space-y-2 text-xs text-slate-400 sm:mt-4 sm:space-y-3 sm:text-sm">
+      <div className={clsx("space-y-2 text-xs text-slate-400 sm:space-y-3 sm:text-sm", compactDensity ? "mt-2 sm:mt-3" : "mt-3 sm:mt-4")}>
         <div className="flex items-center gap-2">
           <HardDrive className="h-4 w-4 shrink-0" />
           <span className="truncate">{mediaItem.library.name}</span>
@@ -349,7 +363,7 @@ export function MediaCardPlayer({
 
       {playbackError ? <p className="mt-3 text-sm text-rose-300">{playbackError}</p> : null}
 
-      <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3 sm:mt-4 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
+      <div className={clsx("flex flex-col gap-3 border-t border-white/10 sm:flex-row sm:items-center sm:justify-between", compactDensity ? "mt-2 pt-2.5 sm:mt-3 sm:pt-3" : "mt-3 pt-3 sm:mt-4 sm:pt-4")}>
         {mediaItem.missing ? (
           <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs uppercase tracking-[0.16em] text-slate-500">
             Playback unavailable

@@ -1,7 +1,13 @@
 import { cookies } from "next/headers";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaBrowser } from "@/components/media/media-browser";
-import { getMediaBrowserData, type MediaSort, type MediaViewMode } from "@/lib/data/media";
+import {
+  getMediaBrowserData,
+  type MediaSort,
+  type MediaThumbnailBadgeMode,
+  type MediaThumbnailDensity,
+  type MediaViewMode,
+} from "@/lib/data/media";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +20,8 @@ type MediaPageProps = {
     tag?: string;
     sort?: MediaSort;
     view?: MediaViewMode;
+    thumbnailDensity?: MediaThumbnailDensity;
+    thumbnailBadge?: MediaThumbnailBadgeMode;
     page?: string;
     pageSize?: string;
   }>;
@@ -34,6 +42,8 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
     tag: params?.tag ?? storedFilters?.tag,
     sort: params?.sort ?? storedFilters?.sort,
     view: params?.view ?? storedFilters?.view,
+    thumbnailDensity: params?.thumbnailDensity ?? storedFilters?.thumbnailDensity,
+    thumbnailBadge: params?.thumbnailBadge ?? storedFilters?.thumbnailBadge,
     page: Number(params?.page ?? 1),
     pageSize: Number(params?.pageSize ?? storedFilters?.pageSize ?? 100),
   });
@@ -60,6 +70,8 @@ function parseStoredMediaFilters(value: string) {
       tag?: string;
       sort?: MediaSort;
       view?: MediaViewMode;
+      thumbnailDensity?: MediaThumbnailDensity;
+      thumbnailBadge?: MediaThumbnailBadgeMode;
       pageSize?: number;
     };
 
@@ -71,6 +83,8 @@ function parseStoredMediaFilters(value: string) {
       tag: parsed.tag ?? "",
       sort: parsed.sort ?? "updated-desc",
       view: parsed.view ?? "details",
+      thumbnailDensity: parsed.thumbnailDensity ?? "standard",
+      thumbnailBadge: parsed.thumbnailBadge ?? "library",
       pageSize: parsed.pageSize ?? 100,
     };
   } catch {
