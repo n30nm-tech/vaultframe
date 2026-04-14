@@ -14,6 +14,8 @@ type MediaPageProps = {
     tag?: string;
     sort?: MediaSort;
     view?: MediaViewMode;
+    page?: string;
+    pageSize?: string;
   }>;
 };
 
@@ -32,6 +34,8 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
     tag: params?.tag ?? storedFilters?.tag,
     sort: params?.sort ?? storedFilters?.sort,
     view: params?.view ?? storedFilters?.view,
+    page: Number(params?.page ?? 1),
+    pageSize: Number(params?.pageSize ?? storedFilters?.pageSize ?? 100),
   });
 
   return (
@@ -56,6 +60,7 @@ function parseStoredMediaFilters(value: string) {
       tag?: string;
       sort?: MediaSort;
       view?: MediaViewMode;
+      pageSize?: number;
     };
 
     return {
@@ -66,6 +71,7 @@ function parseStoredMediaFilters(value: string) {
       tag: parsed.tag ?? "",
       sort: parsed.sort ?? "updated-desc",
       view: parsed.view ?? "details",
+      pageSize: parsed.pageSize ?? 100,
     };
   } catch {
     return undefined;

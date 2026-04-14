@@ -12,6 +12,7 @@ type MediaFilterBarProps = {
     tag: string;
     sort: MediaSort;
     view: MediaViewMode;
+    pageSize: number;
   };
   libraries: Array<{
     id: string;
@@ -19,9 +20,16 @@ type MediaFilterBarProps = {
   }>;
   folders: string[];
   tags: string[];
+  pageSizeOptions: number[];
 };
 
-export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilterBarProps) {
+export function MediaFilterBar({
+  filters,
+  libraries,
+  folders,
+  tags,
+  pageSizeOptions,
+}: MediaFilterBarProps) {
   const router = useRouter();
   const hasActiveFilters =
     Boolean(filters.search) ||
@@ -30,7 +38,8 @@ export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilte
     Boolean(filters.folder) ||
     Boolean(filters.tag) ||
     filters.sort !== "updated-desc" ||
-    filters.view !== "details";
+    filters.view !== "details" ||
+    filters.pageSize !== 100;
 
   return (
     <form
@@ -45,12 +54,13 @@ export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilte
           tag: String(formData.get("tag") ?? ""),
           sort: String(formData.get("sort") ?? "updated-desc"),
           view: String(formData.get("view") ?? "details"),
+          pageSize: Number(formData.get("pageSize") ?? 100),
         };
 
         document.cookie = `vaultframe-media-filters=${encodeURIComponent(JSON.stringify(storedFilters))}; Path=/; Max-Age=2592000; SameSite=Lax`;
       }}
     >
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr_1fr_0.8fr]">
         <Field label="Search">
           <input
             name="search"
@@ -146,6 +156,23 @@ export function MediaFilterBar({ filters, libraries, folders, tags }: MediaFilte
           >
             <option value="details">Detailed cards</option>
             <option value="thumbnails">Thumbnail only</option>
+          </select>
+        </Field>
+
+        <Field label="Per page">
+          <select
+            name="pageSize"
+            defaultValue={String(filters.pageSize)}
+            onChange={(event) => {
+              event.currentTarget.form?.requestSubmit();
+            }}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+          >
+            {pageSizeOptions.map((pageSize) => (
+              <option key={pageSize} value={pageSize}>
+                {pageSize}
+              </option>
+            ))}
           </select>
         </Field>
       </div>

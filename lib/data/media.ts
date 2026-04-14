@@ -64,7 +64,12 @@ export type MediaQueryParams = {
   tag?: string;
   sort?: MediaSort;
   view?: MediaViewMode;
+  page?: number;
+  pageSize?: number;
 };
+
+const DEFAULT_MEDIA_PAGE_SIZE = 100;
+const ALLOWED_MEDIA_PAGE_SIZES = [50, 100, 200] as const;
 
 export async function getMediaBrowserData(params: MediaQueryParams) {
   const prismaWithTag = prisma as typeof prisma & {
@@ -78,6 +83,14 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
   const missing = params.missing ?? "all";
   const sort = params.sort ?? "updated-desc";
   const view = params.view ?? "details";
+  const requestedPageSize = params.pageSize ?? DEFAULT_MEDIA_PAGE_SIZE;
+  const pageSize = ALLOWED_MEDIA_PAGE_SIZES.includes(
+    requestedPageSize as (typeof ALLOWED_MEDIA_PAGE_SIZES)[number],
+  )
+    ? requestedPageSize
+    : DEFAULT_MEDIA_PAGE_SIZE;
+  const currentPage = Math.max(params.page ?? 1, 1);
+  const skip = (currentPage - 1) * pageSize;
 
   const where: Record<string, unknown> = {
     ...(params.libraryId ? { libraryId: params.libraryId } : {}),
@@ -139,7 +152,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       : {}),
   };
 
-  const [mediaItems, libraries, folders, tags, totalCount] = await Promise.all([
+  const [mediaItems, libraries, folders, tags, totalCount, filteredCount] = await Promise.all([
     prisma.mediaItem.findMany({
       where: where as never,
       include: {
@@ -161,6 +174,8 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
         },
       } as never,
       orderBy: getOrderBy(sort) as never,
+      skip,
+      take: pageSize,
     } as never),
     prisma.library.findMany({
       orderBy: {
@@ -196,6 +211,9 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       },
     }) as Promise<Array<{ id: string; name: string }>>,
     prisma.mediaItem.count({
+      where: undefined,
+    } as never),
+    prisma.mediaItem.count({
       where: where as never,
     } as never),
   ]) as [
@@ -211,6 +229,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     Array<{ id: string; name: string }>,
     Array<{ folderPath: string }>,
     Array<{ id: string; name: string }>,
+    number,
     number,
   ];
 
@@ -238,7 +257,12 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     folders: folders.map((item) => item.folderPath),
     tags,
     totalCount,
-    filteredCount: enrichedMediaItems.length,
+    filteredCount,
+    visibleCount: enrichedMediaItems.length,
+    currentPage,
+    pageSize,
+    totalPages: Math.max(Math.ceil(filteredCount / pageSize), 1),
+    pageSizeOptions: [...ALLOWED_MEDIA_PAGE_SIZES],
     filters: {
       search,
       libraryId: params.libraryId ?? "",
@@ -247,6 +271,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       tag,
       sort,
       view,
+      pageSize,
     },
   };
 }
