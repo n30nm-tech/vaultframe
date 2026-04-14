@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import clsx from "clsx";
-import { Expand, Film, Play, TriangleAlert } from "lucide-react";
+import { Check, Expand, Film, ImagePlus, Play, TriangleAlert } from "lucide-react";
+import { setMediaPosterFromStoryboardAction, type MediaPosterActionState } from "@/app/media/[id]/actions";
 
 type PlayerSize = "small" | "medium" | "large";
 
@@ -25,10 +27,14 @@ export function MediaDetailPlayer({
   missing,
   storyboards,
 }: MediaDetailPlayerProps) {
+  const [posterState, posterAction] = useActionState(setMediaPosterFromStoryboardAction, {
+    success: false,
+  } satisfies MediaPosterActionState);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerSize, setPlayerSize] = useState<PlayerSize>("small");
   const [seekTarget, setSeekTarget] = useState<number | null>(null);
   const [selectedStoryboardIndex, setSelectedStoryboardIndex] = useState(0);
+  const [currentPosterPath, setCurrentPosterPath] = useState(posterPath);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -44,12 +50,28 @@ export function MediaDetailPlayer({
   };
 
   useEffect(() => {
+    setCurrentPosterPath(posterPath);
+  }, [posterPath]);
+
+  useEffect(() => {
     if (selectedStoryboardIndex <= storyboards.length - 1) {
       return;
     }
 
     setSelectedStoryboardIndex(0);
   }, [selectedStoryboardIndex, storyboards.length]);
+
+  useEffect(() => {
+    if (!posterState.success) {
+      return;
+    }
+
+    const selectedStoryboard = storyboards[selectedStoryboardIndex] ?? storyboards[0];
+
+    if (selectedStoryboard) {
+      setCurrentPosterPath(selectedStoryboard.path);
+    }
+  }, [posterState.success, selectedStoryboardIndex, storyboards]);
 
   useEffect(() => {
     if (!isPlaying || seekTarget === null || !videoRef.current) {
@@ -91,6 +113,7 @@ export function MediaDetailPlayer({
     return posterPath ? (
       <div className="relative aspect-video">
         <Image src={posterPath} alt={title} fill unoptimized className="object-cover" />
+        
         <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-gradient-to-t from-black/85 via-black/30 to-transparent px-4 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">
           <TriangleAlert className="h-4 w-4" />
           Missing
@@ -113,7 +136,7 @@ export function MediaDetailPlayer({
             <video
               ref={videoRef}
               src={`/api/media/${mediaId}`}
-              poster={posterPath ?? undefined}
+              poster={currentPosterPath ?? undefined}
               controls
               autoPlay
               playsInline
@@ -152,8 +175,12 @@ export function MediaDetailPlayer({
         {storyboards.length > 0 ? (
           <div className="border-t border-white/10 pt-4">
             <StoryboardScrubber
+              mediaId={mediaId}
               storyboards={storyboards}
               title={title}
+              posterPath={currentPosterPath}
+              posterState={posterState}
+              posterAction={posterAction}
               selectedIndex={selectedStoryboardIndex}
               onSelectIndex={setSelectedStoryboardIndex}
               onPlayTimestamp={handleStoryboardSelect}
@@ -174,8 +201,8 @@ export function MediaDetailPlayer({
         }}
         className="group relative block aspect-video w-full overflow-hidden bg-black text-left"
       >
-        {posterPath ? (
-          <Image src={posterPath} alt={title} fill unoptimized className="object-cover transition duration-300 group-hover:scale-[1.02]" />
+        {currentPosterPath ? (
+          <Image src={currentPosterPath} alt={title} fill unoptimized className="object-cover transition duration-300 group-hover:scale-[1.02]" />
         ) : (
           <div className="flex h-full items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
             <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-accent/10 text-accent">
@@ -197,8 +224,12 @@ export function MediaDetailPlayer({
       {storyboards.length > 0 ? (
         <div className="border-t border-white/10 px-4 py-4">
           <StoryboardScrubber
+            mediaId={mediaId}
             storyboards={storyboards}
             title={title}
+            posterPath={currentPosterPath}
+            posterState={posterState}
+            posterAction={posterAction}
             selectedIndex={selectedStoryboardIndex}
             onSelectIndex={setSelectedStoryboardIndex}
             onPlayTimestamp={handleStoryboardSelect}
@@ -210,22 +241,31 @@ export function MediaDetailPlayer({
 }
 
 function StoryboardScrubber({
+  mediaId,
   storyboards,
   title,
+  posterPath,
+  posterState,
+  posterAction,
   selectedIndex,
   onSelectIndex,
   onPlayTimestamp,
 }: {
+  mediaId: string;
   storyboards: Array<{
     path: string;
     timestamp: number;
   }>;
   title: string;
+  posterPath: string | null;
+  posterState: MediaPosterActionState;
+  posterAction: (payload: FormData) => void;
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
   onPlayTimestamp: (timestamp: number) => void;
 }) {
   const selectedStoryboard = storyboards[selectedIndex] ?? storyboards[0];
+  const selectedIsPoster = selectedStoryboard?.path === posterPath;
 
   return (
     <div className="space-y-4">
@@ -233,24 +273,29 @@ function StoryboardScrubber({
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Scene Scrubbing
         </p>
-        {selectedStoryboard ? (
-          <button
-            type="button"
-            onClick={() => onPlayTimestamp(selectedStoryboard.timestamp)}
-            className="inline-flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent transition hover:bg-accent/20"
-          >
-            <Play className="h-3.5 w-3.5" />
-            Play From {formatTimestamp(selectedStoryboard.timestamp)}
-          </button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedStoryboard ? (
+            <button
+              type="button"
+              onClick={() => onPlayTimestamp(selectedStoryboard.timestamp)}
+              className="inline-flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent transition hover:bg-accent/20"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Play From {formatTimestamp(selectedStoryboard.timestamp)}
+            </button>
+          ) : null}
+          {selectedStoryboard ? (
+            <form action={posterAction}>
+              <input type="hidden" name="mediaItemId" value={mediaId} />
+              <input type="hidden" name="storyboardPath" value={selectedStoryboard.path} />
+              <SetPosterButton isCurrentPoster={selectedIsPoster} />
+            </form>
+          ) : null}
+        </div>
       </div>
 
       {selectedStoryboard ? (
-        <button
-          type="button"
-          onClick={() => onPlayTimestamp(selectedStoryboard.timestamp)}
-          className="group block w-full text-left"
-        >
+        <div className="group block w-full text-left">
           <div className="relative aspect-video overflow-hidden rounded-[24px] border border-white/10 bg-black/30 transition group-hover:border-accent/30">
             <Image
               src={selectedStoryboard.path}
@@ -264,8 +309,11 @@ function StoryboardScrubber({
             <span>Selected scene</span>
             <span>{formatTimestamp(selectedStoryboard.timestamp)}</span>
           </div>
-        </button>
+        </div>
       ) : null}
+
+      {posterState.error ? <p className="text-sm text-rose-300">{posterState.error}</p> : null}
+      {posterState.message ? <p className="text-sm text-emerald-300">{posterState.message}</p> : null}
 
       {storyboards.length > 1 ? (
         <div className="space-y-2">
@@ -319,6 +367,21 @@ function StoryboardScrubber({
         ))}
       </div>
     </div>
+  );
+}
+
+function SetPosterButton({ isCurrentPoster }: { isCurrentPoster: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending || isCurrentPoster}
+      className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {isCurrentPoster ? <Check className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
+      {pending ? "Saving..." : isCurrentPoster ? "Current Poster" : "Set As Poster"}
+    </button>
   );
 }
 
