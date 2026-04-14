@@ -4,6 +4,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { NextResponse } from "next/server";
 import { getMediaItemById } from "@/lib/data/media";
+import { assertRequestAuthenticated } from "@/lib/server/auth";
 import { FolderBrowserError, validateMediaFilePath } from "@/lib/server/folder-browser";
 
 type MediaRouteProps = {
@@ -23,6 +24,10 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 export async function GET(request: Request, { params }: MediaRouteProps) {
+  if (!(await assertRequestAuthenticated(request))) {
+    return new NextResponse("Authentication required.", { status: 401 });
+  }
+
   const { id } = await params;
   const mediaItem = await getMediaItemById(id);
 

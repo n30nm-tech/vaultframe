@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 import { Clock3, FolderTree, HardDrive, PlaySquare, ScanSearch } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { requirePageAuth } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await requirePageAuth("/");
   const data = await getDashboardData();
 
   return (

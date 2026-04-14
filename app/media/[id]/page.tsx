@@ -5,6 +5,7 @@ import { MediaTagManager } from "@/components/media/media-tag-manager";
 import { getMediaItemById } from "@/lib/data/media";
 import { listTags } from "@/lib/data/tags";
 import { formatDuration, formatFileSize, getFolderBreadcrumbLabel } from "@/lib/media-presentation";
+import { requirePageAuth } from "@/lib/server/auth";
 import { FolderTree, HardDrive, TriangleAlert } from "lucide-react";
 
 type MediaDetailPageProps = {
@@ -15,6 +16,7 @@ type MediaDetailPageProps = {
 
 export default async function MediaDetailPage({ params }: MediaDetailPageProps) {
   const { id } = await params;
+  await requirePageAuth(`/media/${id}`);
   const [mediaItem, allTags] = await Promise.all([getMediaItemById(id), listTags()]);
 
   if (!mediaItem) {

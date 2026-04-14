@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { assertRequestAuthenticated } from "@/lib/server/auth";
 import { getStoryboardDiskPath } from "@/lib/server/thumbnails";
 
 type StoryboardRouteProps = {
@@ -9,7 +10,11 @@ type StoryboardRouteProps = {
   }>;
 };
 
-export async function GET(_request: Request, { params }: StoryboardRouteProps) {
+export async function GET(request: Request, { params }: StoryboardRouteProps) {
+  if (!(await assertRequestAuthenticated(request))) {
+    return new NextResponse("Authentication required.", { status: 401 });
+  }
+
   const { fileName } = await params;
 
   if (!/^[a-f0-9]+-\d+\.jpg$/i.test(fileName)) {

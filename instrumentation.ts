@@ -3,6 +3,9 @@ export async function register() {
     return;
   }
 
-  const { ensureScanRunnerStarted } = await import("@/lib/server/library-scan");
+  const importScanRunner = new Function('return import("@/lib/server/library-scan");') as () => Promise<{
+    ensureScanRunnerStarted: () => void;
+  }>;
+  const { ensureScanRunnerStarted } = await importScanRunner();
   ensureScanRunnerStarted();
 }

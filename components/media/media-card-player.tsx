@@ -95,6 +95,9 @@ export function MediaCardPlayer({
   }, [isActive]);
 
   const cardSpanClass =
+    thumbnailOnlyView
+      ? ""
+      :
     !isActive
       ? ""
       : playerSize === "large"
@@ -190,33 +193,51 @@ export function MediaCardPlayer({
                 setPlaybackError("This video could not be played.");
                 handleDeactivate();
               }}
-              className="aspect-[16/10] max-h-[42vh] w-full bg-black object-contain sm:aspect-video sm:max-h-none"
+              className={clsx(
+                "w-full bg-black object-contain",
+                thumbnailOnlyView
+                  ? "aspect-[3/4]"
+                  : "aspect-[16/10] max-h-[42vh] sm:aspect-video sm:max-h-none",
+              )}
             />
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-[#090c11] px-3 py-3">
+            <div
+              className={clsx(
+                "border-t border-white/10 bg-[#090c11] px-3 py-3",
+                thumbnailOnlyView
+                  ? "flex items-center justify-between"
+                  : "flex flex-wrap items-center justify-between gap-2",
+              )}
+            >
               <div className="flex flex-wrap items-center gap-2">
-                <SizeButton active={playerSize === "small"} onClick={() => setPlayerSize("small")}>
-                  Small
-                </SizeButton>
-                <SizeButton active={playerSize === "medium"} onClick={() => setPlayerSize("medium")}>
-                  Medium
-                </SizeButton>
-                <SizeButton active={playerSize === "large"} onClick={() => setPlayerSize("large")}>
-                  Large
-                </SizeButton>
+                {!thumbnailOnlyView ? (
+                  <>
+                    <SizeButton active={playerSize === "small"} onClick={() => setPlayerSize("small")}>
+                      Small
+                    </SizeButton>
+                    <SizeButton active={playerSize === "medium"} onClick={() => setPlayerSize("medium")}>
+                      Medium
+                    </SizeButton>
+                    <SizeButton active={playerSize === "large"} onClick={() => setPlayerSize("large")}>
+                      Large
+                    </SizeButton>
+                  </>
+                ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (frameRef.current) {
-                      await frameRef.current.requestFullscreen();
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/[0.08] hover:text-white"
-                >
-                  <Expand className="h-3.5 w-3.5" />
-                  Fullscreen
-                </button>
+                {!thumbnailOnlyView ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (frameRef.current) {
+                        await frameRef.current.requestFullscreen();
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/[0.08] hover:text-white"
+                  >
+                    <Expand className="h-3.5 w-3.5" />
+                    Fullscreen
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={handleDeactivate}
