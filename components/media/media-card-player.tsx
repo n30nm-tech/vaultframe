@@ -44,6 +44,7 @@ type MediaCardPlayerProps = {
       path: string;
       storageAvailable: boolean;
     };
+    sourceFolderName: string;
   };
   activeMediaId: string | null;
   thumbnailOnlyView?: boolean;
@@ -285,7 +286,7 @@ export function MediaCardPlayer({
                 <span>
                   {thumbnailBadgeMode === "frames"
                     ? `${mediaItem.storyboardPaths.length} frames`
-                    : mediaItem.library.name}
+                    : mediaItem.sourceFolderName}
                 </span>
               </div>
             ) : null}
@@ -354,6 +355,10 @@ export function MediaCardPlayer({
         <div className="flex items-center gap-2">
           <HardDrive className="h-4 w-4 shrink-0" />
           <span className="truncate">{mediaItem.library.name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <FolderTree className="h-4 w-4 shrink-0" />
+          <span className="truncate">Source: {mediaItem.sourceFolderName}</span>
         </div>
         <div className="flex items-center gap-2">
           <FolderTree className="h-4 w-4 shrink-0" />

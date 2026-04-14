@@ -73,6 +73,10 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
             </div>
             <div className="flex items-center gap-2">
               <FolderTree className="h-4 w-4 text-slate-500" />
+              <span>Source folder: {mediaItem.sourceFolderName}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FolderTree className="h-4 w-4 text-slate-500" />
               <span>{folderLabel}</span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs uppercase tracking-[0.16em] text-slate-400">
@@ -110,7 +114,13 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
                 </div>
               ) : null}
             </div>
-            <div className="grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-2">
+            <div className="grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-3">
+              <Link
+                href={`/media?folder=${encodeURIComponent(mediaItem.sourceFolderName)}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center text-sm font-medium text-slate-200 transition hover:bg-white/[0.06] hover:text-white"
+              >
+                Show All From Source Folder
+              </Link>
               <Link
                 href={`/media?folder=${encodeURIComponent(mediaItem.folderPath)}`}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center text-sm font-medium text-slate-200 transition hover:bg-white/[0.06] hover:text-white"

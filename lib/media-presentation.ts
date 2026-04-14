@@ -62,6 +62,31 @@ export function getFolderBreadcrumbLabel(folderPath: string, libraryPath: string
   return ["...", ...parts.slice(-3)].join(" / ");
 }
 
+export function getRelativeFolderPath(folderPath: string, libraryPath: string) {
+  const normalizedFolder = normalizeSlashes(folderPath);
+  const normalizedLibrary = normalizeSlashes(libraryPath);
+
+  if (normalizedFolder === normalizedLibrary) {
+    return "";
+  }
+
+  if (normalizedFolder.startsWith(`${normalizedLibrary}/`)) {
+    return normalizedFolder.slice(normalizedLibrary.length + 1);
+  }
+
+  return normalizedFolder;
+}
+
+export function getSourceFolderName(folderPath: string, libraryPath: string) {
+  const relativePath = getRelativeFolderPath(folderPath, libraryPath);
+
+  if (!relativePath) {
+    return "Library root";
+  }
+
+  return relativePath.split("/").filter(Boolean)[0] ?? "Library root";
+}
+
 function normalizeSlashes(value: string) {
   return value.replace(/\\/g, "/").replace(/\/+$/, "");
 }

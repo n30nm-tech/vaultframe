@@ -26,6 +26,7 @@ type MediaFilterBarProps = {
     name: string;
   }>;
   folders: string[];
+  sourceFolders: string[];
   tags: string[];
   pageSizeOptions: number[];
 };
@@ -34,6 +35,7 @@ export function MediaFilterBar({
   filters,
   libraries,
   folders,
+  sourceFolders,
   tags,
   pageSizeOptions,
 }: MediaFilterBarProps) {
@@ -119,10 +121,13 @@ export function MediaFilterBar({
             name="folder"
             list="folder-options"
             defaultValue={filters.folder}
-            placeholder="Any folder"
+            placeholder="Source folder or path"
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-accent/40"
           />
           <datalist id="folder-options">
+            {sourceFolders.map((folder) => (
+              <option key={`source-${folder}`} value={folder} />
+            ))}
             {folders.map((folder) => (
               <option key={folder} value={folder} />
             ))}

@@ -50,6 +50,7 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
         filters={data.filters}
         libraries={data.libraries}
         folders={data.folders}
+        sourceFolders={data.sourceFolders}
         tags={data.tags.map((tag) => tag.name)}
         pageSizeOptions={data.pageSizeOptions}
       />

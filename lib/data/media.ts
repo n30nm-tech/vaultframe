@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getStorageAvailabilityMap } from "@/lib/server/storage-status";
+import { getSourceFolderName } from "@/lib/media-presentation";
 
 export type MediaItemRecord = {
   id: string;
@@ -29,6 +30,7 @@ export type MediaItemRecord = {
     path: string;
     storageAvailable: boolean;
   };
+  sourceFolderName: string;
 };
 
 export type MediaBrowserItemRecord = Omit<MediaItemRecord, "library"> & {
@@ -255,12 +257,18 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
       ...mediaItem.library,
       storageAvailable: libraryAvailability.get(mediaItem.library.id)?.available ?? false,
     },
+    sourceFolderName: getSourceFolderName(mediaItem.folderPath, mediaItem.library.path),
   })) as MediaBrowserItemRecord[];
+
+  const sourceFolders = Array.from(new Set(
+    enrichedMediaItems.map((mediaItem) => mediaItem.sourceFolderName).filter(Boolean),
+  )).sort((a, b) => a.localeCompare(b));
 
   return {
     mediaItems: enrichedMediaItems,
     libraries,
     folders: folders.map((item) => item.folderPath),
+    sourceFolders,
     tags,
     totalCount,
     filteredCount,
@@ -324,6 +332,7 @@ export async function getMediaItemById(id: string) {
       ...mediaItem.library,
       storageAvailable: availability.get(mediaItem.library.id)?.available ?? false,
     },
+    sourceFolderName: getSourceFolderName(mediaItem.folderPath, mediaItem.library.path),
   } satisfies MediaItemRecord;
 }
 
