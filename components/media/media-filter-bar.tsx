@@ -88,7 +88,7 @@ export function MediaFilterBar({
             onChange={(event) => {
               event.currentTarget.form?.requestSubmit();
             }}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             <option value="">All libraries</option>
             {libraries.map((library) => (
@@ -106,7 +106,7 @@ export function MediaFilterBar({
             onChange={(event) => {
               event.currentTarget.form?.requestSubmit();
             }}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             <option value="all">All items</option>
             <option value="available">Available only</option>
@@ -151,7 +151,7 @@ export function MediaFilterBar({
             onChange={(event) => {
               event.currentTarget.form?.requestSubmit();
             }}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             <option value="updated-desc">Newest updated</option>
             <option value="updated-asc">Oldest updated</option>
@@ -175,7 +175,7 @@ export function MediaFilterBar({
             onChange={(event) => {
               event.currentTarget.form?.requestSubmit();
             }}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             <option value="details">Detailed cards</option>
             <option value="thumbnails">Thumbnail only</option>
@@ -189,7 +189,7 @@ export function MediaFilterBar({
             onChange={(event) => {
               event.currentTarget.form?.requestSubmit();
             }}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             <option value="standard">Standard</option>
             <option value="compact">Compact</option>
@@ -203,7 +203,7 @@ export function MediaFilterBar({
             onChange={(event) => {
               event.currentTarget.form?.requestSubmit();
             }}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             <option value="library">Library</option>
             <option value="frames">Frames</option>
@@ -217,7 +217,7 @@ export function MediaFilterBar({
             onChange={(event) => {
               event.currentTarget.form?.requestSubmit();
             }}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             {pageSizeOptions.map((pageSize) => (
               <option key={pageSize} value={pageSize}>

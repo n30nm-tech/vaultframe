@@ -53,7 +53,7 @@ export function MediaTagManager({ mediaItemId, tags, availableTags }: MediaTagMa
           <select
             name="tagId"
             defaultValue=""
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
             <option value="">Choose a saved tag</option>
             {availableTags.map((tag) => (

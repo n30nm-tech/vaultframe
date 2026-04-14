@@ -60,7 +60,7 @@ export function TagRulesManager({ rules }: TagRulesManagerProps) {
             <select
               name="target"
               defaultValue="FILE_NAME"
-              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
             >
               <option value="FILE_NAME">Filename</option>
               <option value="FOLDER_PATH">Folder path</option>
@@ -72,7 +72,7 @@ export function TagRulesManager({ rules }: TagRulesManagerProps) {
             <select
               name="matchMode"
               defaultValue="CONTAINS"
-              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
             >
               <option value="CONTAINS">Contains</option>
               <option value="EQUALS">Equals</option>
@@ -92,7 +92,7 @@ export function TagRulesManager({ rules }: TagRulesManagerProps) {
             <select
               name="enabled"
               defaultValue="true"
-              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
             >
               <option value="true">Enabled</option>
               <option value="false">Disabled</option>
