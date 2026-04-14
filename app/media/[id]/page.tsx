@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { MediaDetailPlayer } from "@/components/media/media-detail-player";
 import { MediaTagManager } from "@/components/media/media-tag-manager";
 import { getMediaItemById } from "@/lib/data/media";
+import { listTags } from "@/lib/data/tags";
 import { formatDuration, formatFileSize, getFolderBreadcrumbLabel } from "@/lib/media-presentation";
 import { FolderTree, HardDrive, TriangleAlert } from "lucide-react";
 
@@ -14,7 +15,7 @@ type MediaDetailPageProps = {
 
 export default async function MediaDetailPage({ params }: MediaDetailPageProps) {
   const { id } = await params;
-  const mediaItem = await getMediaItemById(id);
+  const [mediaItem, allTags] = await Promise.all([getMediaItemById(id), listTags()]);
 
   if (!mediaItem) {
     return (
@@ -33,6 +34,9 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
     timestamp: mediaItem.storyboardTimestamps[index] ?? 0,
   }));
   const folderLabel = getFolderBreadcrumbLabel(mediaItem.folderPath, mediaItem.library.path);
+  const availableTags = allTags.filter(
+    (tag) => !mediaItem.tags.some((assignedTag) => assignedTag.id === tag.id),
+  );
 
   return (
     <div>
@@ -54,7 +58,11 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
             />
           </div>
 
-          <MediaTagManager mediaItemId={mediaItem.id} tags={mediaItem.tags} />
+          <MediaTagManager
+            mediaItemId={mediaItem.id}
+            tags={mediaItem.tags}
+            availableTags={availableTags}
+          />
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-panel">

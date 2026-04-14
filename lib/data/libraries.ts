@@ -13,6 +13,7 @@ export type LibraryRecord = {
   scanStartedAt: Date | null;
   scanFinishedAt: Date | null;
   scanCurrentPath: string | null;
+  scanPendingFiles: string[];
   scanTotalFiles: number;
   scanFilesScanned: number;
   scanVideosFound: number;
@@ -116,6 +117,7 @@ export async function updateLibraryScanState(
     scanStartedAt?: Date | null;
     scanFinishedAt?: Date | null;
     scanCurrentPath?: string | null;
+    scanPendingFiles?: string[];
     scanTotalFiles?: number;
     scanFilesScanned?: number;
     scanVideosFound?: number;

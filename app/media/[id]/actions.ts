@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { addTagToMediaItem, removeTagFromMediaItem } from "@/lib/data/tags";
+import { addExistingTagToMediaItem, removeTagFromMediaItem } from "@/lib/data/tags";
 
 export type MediaTagActionState = {
   success: boolean;
@@ -20,7 +20,7 @@ export async function addMediaTagAction(
   void prevState;
 
   const mediaItemId = String(formData.get("mediaItemId") ?? "").trim();
-  const tagName = String(formData.get("tagName") ?? "").trim();
+  const tagId = String(formData.get("tagId") ?? "").trim();
 
   if (!mediaItemId) {
     return {
@@ -30,7 +30,7 @@ export async function addMediaTagAction(
   }
 
   try {
-    await addTagToMediaItem(mediaItemId, tagName);
+    await addExistingTagToMediaItem(mediaItemId, tagId);
     revalidatePath(`/media/${mediaItemId}`);
     revalidatePath("/media");
 

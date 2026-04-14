@@ -11,13 +11,17 @@ type MediaTagManagerProps = {
     id: string;
     name: string;
   }>;
+  availableTags: Array<{
+    id: string;
+    name: string;
+  }>;
 };
 
 const initialState: MediaTagActionState = {
   success: false,
 };
 
-export function MediaTagManager({ mediaItemId, tags }: MediaTagManagerProps) {
+export function MediaTagManager({ mediaItemId, tags, availableTags }: MediaTagManagerProps) {
   const [state, formAction] = useActionState(addMediaTagAction, initialState);
 
   return (
@@ -46,15 +50,27 @@ export function MediaTagManager({ mediaItemId, tags }: MediaTagManagerProps) {
       <form action={formAction} className="mt-5">
         <input type="hidden" name="mediaItemId" value={mediaItemId} />
         <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            type="text"
-            name="tagName"
-            placeholder="Add a tag"
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-accent/40"
-          />
+          <select
+            name="tagId"
+            defaultValue=""
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
+          >
+            <option value="">Choose a saved tag</option>
+            {availableTags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
           <AddTagButton />
         </div>
       </form>
+
+      {availableTags.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-400">
+          No unused saved tags available yet. Add tags elsewhere first, then they will appear here.
+        </p>
+      ) : null}
 
       {state.error ? <p className="mt-3 text-sm text-rose-300">{state.error}</p> : null}
       {state.message ? <p className="mt-3 text-sm text-emerald-300">{state.message}</p> : null}

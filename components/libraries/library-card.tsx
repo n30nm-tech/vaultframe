@@ -81,6 +81,11 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
             <p>Files checked: {formatCount(library.scanFilesScanned)}</p>
             <p>Files indexed: {formatCount(library.scanVideosFound)}</p>
           </div>
+          {library.scanTotalFiles > 0 ? (
+            <p className="mt-2 text-xs text-sky-200">
+              {formatCount(Math.max(library.scanTotalFiles - library.scanFilesScanned, 0))} files left to check
+            </p>
+          ) : null}
           {library.scanCurrentPath ? (
             <p className="mt-2 break-all text-xs leading-5 text-sky-200">{library.scanCurrentPath}</p>
           ) : null}

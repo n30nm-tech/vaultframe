@@ -46,6 +46,17 @@ export async function scanLibraryById(libraryId: string) {
     throw new Error("Library not found.");
   }
 
+  const libraryCheckpoint = library as typeof library & {
+    scanPendingFiles?: string[];
+    scanTotalFiles?: number;
+    scanFilesScanned?: number;
+    scanVideosFound?: number;
+    scanStartedAt?: Date | null;
+  };
+  const pendingFiles = Array.isArray(libraryCheckpoint.scanPendingFiles)
+    ? libraryCheckpoint.scanPendingFiles
+    : [];
+
   const libraryPath = await validateLibraryPath(library.path);
   const availability = await getDirectoryAvailability(libraryPath, { fresh: true });
 
@@ -53,16 +64,21 @@ export async function scanLibraryById(libraryId: string) {
     throw new Error(availability.message || "The library folder is currently unavailable.");
   }
 
+  const isResuming =
+    library.scanStatus === "RUNNING" &&
+    pendingFiles.length > 0 &&
+    library.scanFilesScanned > 0;
   const now = new Date();
   await updateLibraryScanState(libraryId, {
     scanStatus: "RUNNING",
     scanQueuedAt: null,
-    scanStartedAt: now,
+    scanStartedAt: isResuming ? libraryCheckpoint.scanStartedAt ?? now : now,
     scanFinishedAt: null,
     scanCurrentPath: libraryPath,
-    scanTotalFiles: 0,
-    scanFilesScanned: 0,
-    scanVideosFound: 0,
+    scanPendingFiles: isResuming ? pendingFiles : [],
+    scanTotalFiles: isResuming ? libraryCheckpoint.scanTotalFiles ?? 0 : 0,
+    scanFilesScanned: isResuming ? libraryCheckpoint.scanFilesScanned ?? 0 : 0,
+    scanVideosFound: isResuming ? libraryCheckpoint.scanVideosFound ?? 0 : 0,
     scanError: null,
   });
 
@@ -95,26 +111,40 @@ export async function scanLibraryById(libraryId: string) {
     });
   };
 
-  const files = await collectVideoFiles(
-    libraryPath,
-    async (currentPath, videosFound, filesVisited) => {
-      await persistProgress(currentPath, filesVisited, videosFound);
-    },
-  );
+  const files = isResuming
+    ? await collectResumableVideoFiles(pendingFiles)
+    : await collectVideoFiles(
+        libraryPath,
+        async (currentPath, videosFound, filesVisited) => {
+          await persistProgress(currentPath, filesVisited, videosFound);
+        },
+      );
+
+  const initialProcessedCount = isResuming
+    ? Math.min(libraryCheckpoint.scanFilesScanned ?? 0, files.length)
+    : 0;
+  const initialIndexedCount = isResuming
+    ? Math.min(libraryCheckpoint.scanVideosFound ?? 0, initialProcessedCount)
+    : 0;
+
   await updateLibraryScanState(libraryId, {
-    scanCurrentPath: libraryPath,
+    scanCurrentPath:
+      files[initialProcessedCount]?.fullPath ?? files[files.length - 1]?.fullPath ?? libraryPath,
+    scanPendingFiles: files.map((file) => file.fullPath),
     scanTotalFiles: files.length,
-    scanFilesScanned: 0,
-    scanVideosFound: 0,
+    scanFilesScanned: initialProcessedCount,
+    scanVideosFound: initialIndexedCount,
   });
   const enabledTagRules = await listEnabledTagRules();
-  const seenPaths: string[] = [];
-  let processedCount = 0;
-  let indexedCount = 0;
+  const seenPaths: string[] = files
+    .slice(0, initialProcessedCount)
+    .map((file) => file.fullPath);
+  let processedCount = initialProcessedCount;
+  let indexedCount = initialIndexedCount;
   let skippedCount = 0;
   let lastNonFatalError: string | null = null;
 
-  for (const file of files) {
+  for (const file of files.slice(initialProcessedCount)) {
     try {
       seenPaths.push(file.fullPath);
       const matchedTagNames = getMatchedRuleTagNames({
@@ -254,6 +284,7 @@ export async function scanLibraryById(libraryId: string) {
     scanQueuedAt: null,
     scanFinishedAt: new Date(),
     scanCurrentPath: null,
+    scanPendingFiles: [],
     scanTotalFiles: files.length,
     scanFilesScanned: processedCount,
     scanVideosFound: indexedCount,
@@ -513,6 +544,52 @@ async function collectVideoFiles(
   return results;
 }
 
+async function collectResumableVideoFiles(filePaths: string[]) {
+  const results: Array<{
+    fullPath: string;
+    folderPath: string;
+    fileName: string;
+    extension: string;
+    sizeBytes: bigint | null;
+  }> = [];
+
+  for (const fullPath of filePaths) {
+    const file = await toVideoFileRecord(fullPath);
+
+    if (file) {
+      results.push(file);
+    }
+  }
+
+  return results;
+}
+
+async function toVideoFileRecord(fullPath: string) {
+  try {
+    const entryStats = await stat(fullPath);
+
+    if (!entryStats.isFile()) {
+      return null;
+    }
+
+    const extension = path.extname(fullPath).toLowerCase();
+
+    if (!VIDEO_EXTENSIONS.has(extension)) {
+      return null;
+    }
+
+    return {
+      fullPath,
+      folderPath: path.dirname(fullPath),
+      fileName: path.basename(fullPath),
+      extension,
+      sizeBytes: typeof entryStats.size === "number" ? BigInt(entryStats.size) : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function isFolderBrowserError(error: unknown) {
   return error instanceof FolderBrowserError;
 }
@@ -535,7 +612,6 @@ async function executeScanJob(libraryId: string) {
       scanStatus: "FAILED",
       scanQueuedAt: null,
       scanFinishedAt: new Date(),
-      scanTotalFiles: 0,
       scanError: error instanceof Error ? error.message : "Scan failed.",
     });
   } finally {
@@ -551,6 +627,7 @@ async function markLibraryScanRunning(libraryId: string) {
     scanStartedAt: new Date(),
     scanFinishedAt: null,
     scanCurrentPath: null,
+    scanPendingFiles: [],
     scanTotalFiles: 0,
     scanFilesScanned: 0,
     scanVideosFound: 0,
@@ -565,6 +642,7 @@ async function queueLibraryScan(libraryId: string) {
     scanStartedAt: null,
     scanFinishedAt: null,
     scanCurrentPath: null,
+    scanPendingFiles: [],
     scanTotalFiles: 0,
     scanFilesScanned: 0,
     scanVideosFound: 0,
