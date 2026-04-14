@@ -18,6 +18,7 @@ model Library {
   scanFinishedAt DateTime?
   scanCurrentPath String?
   scanPendingFiles String[] @default([])
+  scanResumed   Boolean     @default(false)
   scanTotalFiles Int        @default(0)
   scanFilesScanned Int      @default(0)
   scanVideosFound Int       @default(0)

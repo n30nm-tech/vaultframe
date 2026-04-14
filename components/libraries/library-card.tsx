@@ -76,6 +76,11 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
       {library.scanStatus === "RUNNING" ? (
         <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">Scanning</p>
+          {library.scanResumed ? (
+            <p className="mt-2 text-sm text-sky-50">
+              Resumed from the last saved checkpoint.
+            </p>
+          ) : null}
           <div className="mt-2 grid gap-2 text-sm text-sky-50 sm:grid-cols-3">
             <p>Total files: {formatCount(library.scanTotalFiles)}</p>
             <p>Files checked: {formatCount(library.scanFilesScanned)}</p>

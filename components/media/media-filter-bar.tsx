@@ -74,6 +74,9 @@ export function MediaFilterBar({
           <select
             name="libraryId"
             defaultValue={filters.libraryId}
+            onChange={(event) => {
+              event.currentTarget.form?.requestSubmit();
+            }}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
           >
             <option value="">All libraries</option>
@@ -89,6 +92,9 @@ export function MediaFilterBar({
           <select
             name="missing"
             defaultValue={filters.missing}
+            onChange={(event) => {
+              event.currentTarget.form?.requestSubmit();
+            }}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
           >
             <option value="all">All items</option>
@@ -131,6 +137,9 @@ export function MediaFilterBar({
           <select
             name="sort"
             defaultValue={filters.sort}
+            onChange={(event) => {
+              event.currentTarget.form?.requestSubmit();
+            }}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
           >
             <option value="updated-desc">Newest updated</option>
@@ -152,6 +161,9 @@ export function MediaFilterBar({
           <select
             name="view"
             defaultValue={filters.view}
+            onChange={(event) => {
+              event.currentTarget.form?.requestSubmit();
+            }}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40"
           >
             <option value="details">Detailed cards</option>

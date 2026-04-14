@@ -6,11 +6,17 @@
 
 - Scene scrubbing on the media detail page with a selected-scene preview
 - Click-to-play from the selected storyboard scene with a dedicated action button
+- Configurable media browser page sizes with 100 items per page as the default
+- Route-level loading states for Dashboard, Libraries, Media, and Settings
+- Settings system status panel for database, FFmpeg, FFprobe, and media-root health
 
 ### Changed
 
 - App branding and documentation now reflect the v3.2 release
 - Storyboard interaction on the detail page now behaves like a scrub timeline instead of a simple static grid
+- Media browser now uses server-side paging instead of loading the whole result set at once
+- Library, status, sort, view, and page-size controls on Media now apply immediately
+- Running scans now clearly show when they resumed from a saved checkpoint
 
 ## v3.1.0 - Unreleased
 
