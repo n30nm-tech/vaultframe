@@ -1,8 +1,27 @@
 import { Prisma } from "@prisma/client";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { getStorageAvailabilityMap } from "@/lib/server/storage-status";
 import { listAllSubdirectories } from "@/lib/server/folder-browser";
+
+const VIDEO_EXTENSIONS = new Set([
+  ".mp4",
+  ".mkv",
+  ".avi",
+  ".mov",
+  ".wmv",
+  ".webm",
+  ".m4v",
+  ".ts",
+  ".m2ts",
+  ".mts",
+  ".mpg",
+  ".mpeg",
+  ".flv",
+  ".3gp",
+  ".ogv",
+]);
 
 export type LibraryRecord = {
   id: string;
@@ -85,15 +104,22 @@ export async function createLibrariesFromSubfolders(values: {
   enabled: boolean;
 }) {
   const subfolders = await listAllSubdirectories(values.path);
+  const importableFolders = (
+    await Promise.all(
+      subfolders.map(async (folder) =>
+        (await folderContainsVideoFiles(folder.path)) ? folder : null,
+      ),
+    )
+  ).filter((folder): folder is (typeof subfolders)[number] => Boolean(folder));
 
-  if (subfolders.length === 0) {
-    throw new Error("This folder has no nested subfolders to import as libraries.");
+  if (importableFolders.length === 0) {
+    throw new Error("No nested folders containing video files were found.");
   }
 
   const existingLibraries = await prisma.library.findMany({
     where: {
       path: {
-        in: subfolders.map((folder) => folder.path),
+        in: importableFolders.map((folder) => folder.path),
       },
     },
     select: {
@@ -101,10 +127,10 @@ export async function createLibrariesFromSubfolders(values: {
     },
   });
   const existingPaths = new Set(existingLibraries.map((library) => library.path));
-  const librariesToCreate = subfolders.filter((folder) => !existingPaths.has(folder.path));
+  const librariesToCreate = importableFolders.filter((folder) => !existingPaths.has(folder.path));
 
   if (librariesToCreate.length === 0) {
-    throw new Error("All nested subfolders are already saved as libraries.");
+    throw new Error("All nested folders containing video files are already saved as libraries.");
   }
 
   await prisma.library.createMany({
@@ -118,7 +144,7 @@ export async function createLibrariesFromSubfolders(values: {
 
   return {
     createdCount: librariesToCreate.length,
-    skippedCount: subfolders.length - librariesToCreate.length,
+    skippedCount: importableFolders.length - librariesToCreate.length,
   };
 }
 
@@ -186,4 +212,17 @@ function mapLibraryError(error: unknown) {
   }
 
   return new Error("Unable to save the library right now.");
+}
+
+async function folderContainsVideoFiles(folderPath: string) {
+  try {
+    const entries = await readdir(folderPath, { withFileTypes: true });
+
+    return entries.some(
+      (entry) =>
+        entry.isFile() && VIDEO_EXTENSIONS.has(path.extname(entry.name).toLowerCase()),
+    );
+  } catch {
+    return false;
+  }
 }
