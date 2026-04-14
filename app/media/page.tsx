@@ -84,7 +84,7 @@ function parseStoredMediaFilters(value: string) {
       sort: parsed.sort ?? "updated-desc",
       view: parsed.view ?? "details",
       thumbnailDensity: parsed.thumbnailDensity ?? "standard",
-      thumbnailBadge: parsed.thumbnailBadge ?? "library",
+      thumbnailBadge: parsed.thumbnailBadge ?? "folder-name",
       pageSize: parsed.pageSize ?? 100,
     };
   } catch {

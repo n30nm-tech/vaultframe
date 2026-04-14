@@ -35,7 +35,7 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
     if (data.filters.thumbnailDensity !== "standard") {
       query.set("thumbnailDensity", data.filters.thumbnailDensity);
     }
-    if (data.filters.thumbnailBadge !== "library") {
+    if (data.filters.thumbnailBadge !== "folder-name") {
       query.set("thumbnailBadge", data.filters.thumbnailBadge);
     }
     if (data.filters.pageSize !== 100) query.set("pageSize", String(data.filters.pageSize));

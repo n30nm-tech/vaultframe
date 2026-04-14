@@ -49,7 +49,7 @@ export function MediaFilterBar({
     filters.sort !== "updated-desc" ||
     filters.view !== "details" ||
     filters.thumbnailDensity !== "standard" ||
-    filters.thumbnailBadge !== "library" ||
+    filters.thumbnailBadge !== "folder-name" ||
     filters.pageSize !== 100;
 
   return (
@@ -66,7 +66,7 @@ export function MediaFilterBar({
           sort: String(formData.get("sort") ?? "updated-desc"),
           view: String(formData.get("view") ?? "details"),
           thumbnailDensity: String(formData.get("thumbnailDensity") ?? "standard"),
-          thumbnailBadge: String(formData.get("thumbnailBadge") ?? "library"),
+          thumbnailBadge: String(formData.get("thumbnailBadge") ?? "folder-name"),
           pageSize: Number(formData.get("pageSize") ?? 100),
         };
 
@@ -210,7 +210,8 @@ export function MediaFilterBar({
             }}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition focus:border-accent/40 [&_option]:bg-[#0c1016] [&_option]:text-white"
           >
-            <option value="library">Library</option>
+            <option value="folder-name">Folder name</option>
+            <option value="library-name">Saved library name</option>
             <option value="frames">Frames</option>
           </select>
         </Field>
