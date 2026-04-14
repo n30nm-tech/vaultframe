@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaBrowser } from "@/components/media/media-browser";
-import { requirePageAuth } from "@/lib/server/auth";
 import {
   getMediaBrowserData,
   type MediaSort,
@@ -30,12 +29,6 @@ type MediaPageProps = {
 
 export default async function MediaPage({ searchParams }: MediaPageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const nextPath = params
-    ? `/media?${new URLSearchParams(
-        Object.entries(params).filter(([, value]) => typeof value === "string") as Array<[string, string]>,
-      ).toString()}`
-    : "/media";
-  await requirePageAuth(nextPath === "/media?" ? "/media" : nextPath);
   const cookieStore = await cookies();
   const storedFilterValue = cookieStore.get("vaultframe-media-filters")?.value;
   const storedFilters = storedFilterValue

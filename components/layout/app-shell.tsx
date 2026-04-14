@@ -10,7 +10,6 @@ import { navigationItems } from "@/lib/navigation";
 
 export function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
-  const isLoginPath = pathname === "/login";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [panicBlurActive, setPanicBlurActive] = useState(false);
   const [panicArmed, setPanicArmed] = useState(false);
@@ -20,10 +19,6 @@ export function AppShell({ children }: PropsWithChildren) {
   }, [pathname]);
 
   useEffect(() => {
-    if (isLoginPath) {
-      return;
-    }
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setPanicArmed(false);
@@ -47,11 +42,7 @@ export function AppShell({ children }: PropsWithChildren) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isLoginPath, panicArmed]);
-
-  if (isLoginPath) {
-    return <div className="min-h-screen bg-background bg-hero-glow text-foreground">{children}</div>;
-  }
+  }, [panicArmed]);
 
   return (
     <div className="min-h-screen bg-background bg-hero-glow text-foreground">
@@ -113,14 +104,6 @@ export function AppShell({ children }: PropsWithChildren) {
                     {panicBlurActive ? "Clear Panic Blur" : panicArmed ? "Press any key" : "Arm Panic Blur"}
                   </span>
                 </button>
-
-                <Link
-                  href="/logout"
-                  className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 transition hover:bg-rose-500/20"
-                >
-                  <Shield className="h-4 w-4" />
-                  <span className="hidden sm:inline">Lock now</span>
-                </Link>
 
                 <div className="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-1 lg:flex">
                   {navigationItems.map((item) => {

@@ -1,13 +1,11 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { LibrariesManager } from "@/components/libraries/libraries-manager";
 import { listLibraries } from "@/lib/data/libraries";
-import { requirePageAuth } from "@/lib/server/auth";
 import { ensureScanRunnerStarted } from "@/lib/server/library-scan";
 
 export const dynamic = "force-dynamic";
 
 export default async function LibrariesPage() {
-  await requirePageAuth("/libraries");
   ensureScanRunnerStarted();
   const libraries = await listLibraries();
 

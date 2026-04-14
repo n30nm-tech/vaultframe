@@ -1,15 +1,12 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { ChangePasswordPanel } from "@/components/settings/change-password-panel";
 import { SystemStatusPanel } from "@/components/settings/system-status-panel";
 import { TagRulesManager } from "@/components/settings/tag-rules-manager";
 import { getSettingsOverview } from "@/lib/data/settings";
 import { listTagRules } from "@/lib/data/tag-rules";
-import { requirePageAuth } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  await requirePageAuth("/settings");
   const [rules, overview] = await Promise.all([listTagRules(), getSettingsOverview()]);
 
   return (
@@ -21,7 +18,6 @@ export default async function SettingsPage() {
       />
 
       <SystemStatusPanel overview={overview} />
-      <ChangePasswordPanel />
       <TagRulesManager rules={rules} />
     </div>
   );
