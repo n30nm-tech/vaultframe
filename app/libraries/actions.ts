@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   createLibrary,
+  createLibrariesFromSubfolders,
   deleteLibrary,
   toggleLibraryEnabled,
   updateLibrary,
@@ -30,6 +31,7 @@ type ParsedLibraryFormData =
         name: string;
         path: string;
         enabled: boolean;
+        importMode: "single" | "subfolders";
       };
     }
   | {
@@ -53,6 +55,15 @@ export async function createLibraryAction(
 
   try {
     await validateLibraryPath(parsed.values.path);
+    if (parsed.values.importMode === "subfolders") {
+      const result = await createLibrariesFromSubfolders(parsed.values);
+      revalidatePath("/libraries");
+      return {
+        success: true,
+        message: `Created ${result.createdCount} libraries from subfolders.`,
+      };
+    }
+
     await createLibrary(parsed.values);
     revalidatePath("/libraries");
     return { success: true };
@@ -155,10 +166,12 @@ function parseLibraryFormData(formData: FormData): ParsedLibraryFormData {
   const name = String(formData.get("name") ?? "").trim();
   const path = String(formData.get("path") ?? "").trim();
   const enabled = String(formData.get("enabled") ?? "true") === "true";
+  const importMode =
+    String(formData.get("importMode") ?? "single") === "subfolders" ? "subfolders" : "single";
 
   const fields: LibraryActionState["fields"] = {};
 
-  if (!name) {
+  if (importMode === "single" && !name) {
     fields.name = "Name is required.";
   }
 
@@ -181,6 +194,7 @@ function parseLibraryFormData(formData: FormData): ParsedLibraryFormData {
       name,
       path,
       enabled,
+      importMode,
     },
   };
 }

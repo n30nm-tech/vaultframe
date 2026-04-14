@@ -69,7 +69,7 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
           <div className="space-y-5 text-sm text-slate-300">
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4 text-slate-500" />
-              <span>{mediaItem.library.name}</span>
+              <span>{mediaItem.library.displayName}</span>
             </div>
             <div className="flex items-center gap-2">
               <FolderTree className="h-4 w-4 text-slate-500" />

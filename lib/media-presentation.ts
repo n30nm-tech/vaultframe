@@ -87,6 +87,12 @@ export function getSourceFolderName(folderPath: string, libraryPath: string) {
   return relativePath.split("/").filter(Boolean)[0] ?? "Library root";
 }
 
+export function getLibraryFolderName(libraryPath: string) {
+  const normalizedPath = normalizeSlashes(libraryPath);
+  const parts = normalizedPath.split("/").filter(Boolean);
+  return parts.at(-1) ?? normalizedPath;
+}
+
 function normalizeSlashes(value: string) {
   return value.replace(/\\/g, "/").replace(/\/+$/, "");
 }

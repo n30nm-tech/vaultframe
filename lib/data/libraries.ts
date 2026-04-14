@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
+import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { getStorageAvailabilityMap } from "@/lib/server/storage-status";
+import { listImmediateSubdirectories } from "@/lib/server/folder-browser";
 
 export type LibraryRecord = {
   id: string;
@@ -76,6 +78,48 @@ export async function createLibrary(values: LibraryFormValues) {
   } catch (error) {
     throw mapLibraryError(error);
   }
+}
+
+export async function createLibrariesFromSubfolders(values: {
+  path: string;
+  enabled: boolean;
+}) {
+  const subfolders = await listImmediateSubdirectories(values.path);
+
+  if (subfolders.length === 0) {
+    throw new Error("This folder has no subfolders to import as libraries.");
+  }
+
+  const existingLibraries = await prisma.library.findMany({
+    where: {
+      path: {
+        in: subfolders.map((folder) => folder.path),
+      },
+    },
+    select: {
+      path: true,
+    },
+  });
+  const existingPaths = new Set(existingLibraries.map((library) => library.path));
+  const librariesToCreate = subfolders.filter((folder) => !existingPaths.has(folder.path));
+
+  if (librariesToCreate.length === 0) {
+    throw new Error("All immediate subfolders are already saved as libraries.");
+  }
+
+  await prisma.library.createMany({
+    data: librariesToCreate.map((folder) => ({
+      name: path.basename(folder.path),
+      path: folder.path,
+      enabled: values.enabled,
+    })),
+    skipDuplicates: true,
+  });
+
+  return {
+    createdCount: librariesToCreate.length,
+    skippedCount: subfolders.length - librariesToCreate.length,
+  };
 }
 
 export async function updateLibrary(id: string, values: LibraryFormValues) {

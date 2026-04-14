@@ -120,6 +120,11 @@ export async function validateLibraryPath(pathValue: string) {
   return currentPath;
 }
 
+export async function listImmediateSubdirectories(pathValue: string) {
+  const validatedPath = await validateLibraryPath(pathValue);
+  return listSubdirectories(validatedPath);
+}
+
 export async function getDirectoryAvailability(
   targetPath: string,
   options?: {

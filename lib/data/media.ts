@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getStorageAvailabilityMap } from "@/lib/server/storage-status";
-import { getSourceFolderName } from "@/lib/media-presentation";
+import { getLibraryFolderName, getSourceFolderName } from "@/lib/media-presentation";
 
 export type MediaItemRecord = {
   id: string;
@@ -27,6 +27,7 @@ export type MediaItemRecord = {
   library: {
     id: string;
     name: string;
+    displayName: string;
     path: string;
     storageAvailable: boolean;
   };
@@ -37,6 +38,7 @@ export type MediaBrowserItemRecord = Omit<MediaItemRecord, "library"> & {
   library: {
     id: string;
     name: string;
+    displayName: string;
     path: string;
     storageAvailable: boolean;
   };
@@ -58,7 +60,7 @@ export type MediaSort =
 
 export type MediaViewMode = "details" | "thumbnails";
 export type MediaThumbnailDensity = "standard" | "compact";
-export type MediaThumbnailBadgeMode = "library" | "frames";
+export type MediaThumbnailBadgeMode = "library-name" | "folder-name" | "frames";
 
 export type MediaQueryParams = {
   search?: string;
@@ -90,7 +92,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
   const sort = params.sort ?? "updated-desc";
   const view = params.view ?? "details";
   const thumbnailDensity = params.thumbnailDensity ?? "standard";
-  const thumbnailBadge = params.thumbnailBadge ?? "library";
+  const thumbnailBadge = params.thumbnailBadge ?? "folder-name";
   const requestedPageSize = params.pageSize ?? DEFAULT_MEDIA_PAGE_SIZE;
   const pageSize = ALLOWED_MEDIA_PAGE_SIZES.includes(
     requestedPageSize as (typeof ALLOWED_MEDIA_PAGE_SIZES)[number],
@@ -255,6 +257,7 @@ export async function getMediaBrowserData(params: MediaQueryParams) {
     ...mediaItem,
     library: {
       ...mediaItem.library,
+      displayName: getLibraryFolderName(mediaItem.library.path),
       storageAvailable: libraryAvailability.get(mediaItem.library.id)?.available ?? false,
     },
     sourceFolderName: getSourceFolderName(mediaItem.folderPath, mediaItem.library.path),
@@ -330,6 +333,7 @@ export async function getMediaItemById(id: string) {
     ...mediaItem,
     library: {
       ...mediaItem.library,
+      displayName: getLibraryFolderName(mediaItem.library.path),
       storageAvailable: availability.get(mediaItem.library.id)?.available ?? false,
     },
     sourceFolderName: getSourceFolderName(mediaItem.folderPath, mediaItem.library.path),

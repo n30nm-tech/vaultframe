@@ -41,6 +41,7 @@ type MediaCardPlayerProps = {
     library: {
       id: string;
       name: string;
+      displayName: string;
       path: string;
       storageAvailable: boolean;
     };
@@ -49,7 +50,7 @@ type MediaCardPlayerProps = {
   activeMediaId: string | null;
   thumbnailOnlyView?: boolean;
   compactDensity?: boolean;
-  thumbnailBadgeMode?: "library" | "frames";
+  thumbnailBadgeMode?: "library-name" | "folder-name" | "frames";
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
 };
@@ -59,7 +60,7 @@ export function MediaCardPlayer({
   activeMediaId,
   thumbnailOnlyView = false,
   compactDensity = false,
-  thumbnailBadgeMode = "library",
+  thumbnailBadgeMode = "folder-name",
   onActivate,
   onDeactivate,
 }: MediaCardPlayerProps) {
@@ -286,7 +287,9 @@ export function MediaCardPlayer({
                 <span>
                   {thumbnailBadgeMode === "frames"
                     ? `${mediaItem.storyboardPaths.length} frames`
-                    : mediaItem.sourceFolderName}
+                    : thumbnailBadgeMode === "library-name"
+                      ? mediaItem.library.name
+                      : mediaItem.library.displayName}
                 </span>
               </div>
             ) : null}
@@ -354,7 +357,7 @@ export function MediaCardPlayer({
       <div className={clsx("space-y-2 text-xs text-slate-400 sm:space-y-3 sm:text-sm", compactDensity ? "mt-2 sm:mt-3" : "mt-3 sm:mt-4")}>
         <div className="flex items-center gap-2">
           <HardDrive className="h-4 w-4 shrink-0" />
-          <span className="truncate">{mediaItem.library.name}</span>
+          <span className="truncate">{mediaItem.library.displayName}</span>
         </div>
         <div className="flex items-center gap-2">
           <FolderTree className="h-4 w-4 shrink-0" />

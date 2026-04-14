@@ -28,11 +28,13 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
   const [pathValue, setPathValue] = useState(library?.path ?? "");
   const [chooserOpen, setChooserOpen] = useState(false);
   const [manualEditEnabled, setManualEditEnabled] = useState(false);
+  const [importMode, setImportMode] = useState<"single" | "subfolders">("single");
 
   useEffect(() => {
     setEnabled(library?.enabled ?? true);
     setPathValue(library?.path ?? "");
     setManualEditEnabled(false);
+    setImportMode("single");
   }, [library]);
 
   useEffect(() => {
@@ -75,14 +77,56 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
         <form action={formAction} className="flex flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           {isEditing ? <input type="hidden" name="id" value={library?.id} /> : null}
           <input type="hidden" name="enabled" value={String(enabled)} />
+          <input type="hidden" name="importMode" value={importMode} />
 
           <div className="space-y-5">
+            {!isEditing ? (
+              <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-sm font-medium text-slate-200">Import mode</p>
+                <p className="mt-1 text-sm leading-6 text-slate-400">
+                  Save one library for the selected folder, or create one library per immediate subfolder.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setImportMode("single")}
+                    className={`rounded-2xl border px-4 py-4 text-left transition ${
+                      importMode === "single"
+                        ? "border-accent/30 bg-accent/10"
+                        : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <p className="font-medium text-white">Single library</p>
+                    <p className="mt-1 text-sm text-slate-400">Use one saved library for the selected folder.</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImportMode("subfolders")}
+                    className={`rounded-2xl border px-4 py-4 text-left transition ${
+                      importMode === "subfolders"
+                        ? "border-accent/30 bg-accent/10"
+                        : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <p className="font-medium text-white">One per subfolder</p>
+                    <p className="mt-1 text-sm text-slate-400">Create a library for each immediate child folder using its folder name.</p>
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             <Field
               label="Library name"
               name="name"
               placeholder="Main archive"
               defaultValue={library?.name ?? ""}
               error={state.fields?.name}
+              disabled={!isEditing && importMode === "subfolders"}
+              helperText={
+                !isEditing && importMode === "subfolders"
+                  ? "Folder names will be used automatically for each created library."
+                  : undefined
+              }
             />
 
             <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
@@ -210,9 +254,11 @@ type FieldProps = {
   placeholder: string;
   defaultValue: string;
   error?: string;
+  disabled?: boolean;
+  helperText?: string;
 };
 
-function Field({ label, name, placeholder, defaultValue, error }: FieldProps) {
+function Field({ label, name, placeholder, defaultValue, error, disabled = false, helperText }: FieldProps) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-200">{label}</span>
@@ -220,8 +266,10 @@ function Field({ label, name, placeholder, defaultValue, error }: FieldProps) {
         name={name}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-accent/40 focus:bg-white/[0.05]"
+        disabled={disabled}
+        className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-accent/40 focus:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-50"
       />
+      {helperText ? <span className="mt-2 block text-sm text-slate-400">{helperText}</span> : null}
       {error ? <span className="mt-2 block text-sm text-rose-300">{error}</span> : null}
     </label>
   );
