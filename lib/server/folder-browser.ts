@@ -120,9 +120,27 @@ export async function validateLibraryPath(pathValue: string) {
   return currentPath;
 }
 
-export async function listImmediateSubdirectories(pathValue: string) {
+export async function listAllSubdirectories(pathValue: string) {
   const validatedPath = await validateLibraryPath(pathValue);
-  return listSubdirectories(validatedPath);
+  const results: FolderEntry[] = [];
+  const queue = [validatedPath];
+
+  while (queue.length > 0) {
+    const currentPath = queue.shift();
+
+    if (!currentPath) {
+      continue;
+    }
+
+    const children = await listSubdirectories(currentPath);
+
+    for (const child of children) {
+      results.push(child);
+      queue.push(child.path);
+    }
+  }
+
+  return results;
 }
 
 export async function getDirectoryAvailability(

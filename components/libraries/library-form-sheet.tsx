@@ -84,7 +84,7 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
               <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-sm font-medium text-slate-200">Import mode</p>
                 <p className="mt-1 text-sm leading-6 text-slate-400">
-                  Save one library for the selected folder, or create one library per immediate subfolder.
+                  Save one library for the selected folder, or create one library for every nested subfolder below it.
                 </p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <button
@@ -95,9 +95,9 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
                         ? "border-accent/30 bg-accent/10"
                         : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
                     }`}
-                  >
-                    <p className="font-medium text-white">Single library</p>
-                    <p className="mt-1 text-sm text-slate-400">Use one saved library for the selected folder.</p>
+                    >
+                      <p className="font-medium text-white">Single library</p>
+                      <p className="mt-1 text-sm text-slate-400">Use one saved library for the selected folder.</p>
                   </button>
                   <button
                     type="button"
@@ -107,12 +107,12 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
                         ? "border-accent/30 bg-accent/10"
                         : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
                     }`}
-                  >
-                    <p className="font-medium text-white">One per subfolder</p>
-                    <p className="mt-1 text-sm text-slate-400">Create a library for each immediate child folder using its folder name.</p>
-                  </button>
+                    >
+                      <p className="font-medium text-white">One per nested folder</p>
+                      <p className="mt-1 text-sm text-slate-400">Create a library for every child folder found anywhere under the selected folder.</p>
+                    </button>
+                  </div>
                 </div>
-              </div>
             ) : null}
 
             <Field

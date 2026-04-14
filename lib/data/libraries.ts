@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { getStorageAvailabilityMap } from "@/lib/server/storage-status";
-import { listImmediateSubdirectories } from "@/lib/server/folder-browser";
+import { listAllSubdirectories } from "@/lib/server/folder-browser";
 
 export type LibraryRecord = {
   id: string;
@@ -84,10 +84,10 @@ export async function createLibrariesFromSubfolders(values: {
   path: string;
   enabled: boolean;
 }) {
-  const subfolders = await listImmediateSubdirectories(values.path);
+  const subfolders = await listAllSubdirectories(values.path);
 
   if (subfolders.length === 0) {
-    throw new Error("This folder has no subfolders to import as libraries.");
+    throw new Error("This folder has no nested subfolders to import as libraries.");
   }
 
   const existingLibraries = await prisma.library.findMany({
@@ -104,7 +104,7 @@ export async function createLibrariesFromSubfolders(values: {
   const librariesToCreate = subfolders.filter((folder) => !existingPaths.has(folder.path));
 
   if (librariesToCreate.length === 0) {
-    throw new Error("All immediate subfolders are already saved as libraries.");
+    throw new Error("All nested subfolders are already saved as libraries.");
   }
 
   await prisma.library.createMany({
