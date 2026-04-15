@@ -2,10 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
 import clsx from "clsx";
-import { Check, Expand, Film, ImagePlus, Play, TriangleAlert } from "lucide-react";
-import { setMediaPosterFromStoryboardFormAction } from "@/app/media/[id]/actions";
+import { Expand, Film, Play, TriangleAlert } from "lucide-react";
 
 type PlayerSize = "small" | "medium" | "large";
 
@@ -237,7 +235,6 @@ function StoryboardScrubber({
   onPlayTimestamp: (timestamp: number) => void;
 }) {
   const selectedStoryboard = storyboards[selectedIndex] ?? storyboards[0];
-  const selectedIsPoster = selectedStoryboard?.path === posterPath;
 
   return (
     <div className="space-y-4">
@@ -255,13 +252,6 @@ function StoryboardScrubber({
               <Play className="h-3.5 w-3.5" />
               Play From {formatTimestamp(selectedStoryboard.timestamp)}
             </button>
-          ) : null}
-          {selectedStoryboard ? (
-            <form action={setMediaPosterFromStoryboardFormAction}>
-              <input type="hidden" name="mediaItemId" value={mediaId} />
-              <input type="hidden" name="storyboardPath" value={selectedStoryboard.path} />
-              <SetPosterButton isCurrentPoster={selectedIsPoster} />
-            </form>
           ) : null}
         </div>
       </div>
@@ -336,21 +326,6 @@ function StoryboardScrubber({
         ))}
       </div>
     </div>
-  );
-}
-
-function SetPosterButton({ isCurrentPoster }: { isCurrentPoster: boolean }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending || isCurrentPoster}
-      className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {isCurrentPoster ? <Check className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
-      {pending ? "Saving..." : isCurrentPoster ? "Current Poster" : "Set As Poster"}
-    </button>
   );
 }
 
