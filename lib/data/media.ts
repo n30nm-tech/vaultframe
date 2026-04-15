@@ -11,6 +11,8 @@ export type MediaItemRecord = {
   fileName: string;
   title: string | null;
   thumbnailPath: string | null;
+  posterSelectionMode: string;
+  posterReviewedAt: Date | null;
   storyboardPaths: string[];
   storyboardTimestamps: number[];
   extension: string;
@@ -74,6 +76,15 @@ export type MediaQueryParams = {
   thumbnailBadge?: MediaThumbnailBadgeMode;
   page?: number;
   pageSize?: number;
+};
+
+export type PosterReviewFilterParams = {
+  libraryId?: string;
+  sourceFolder?: string;
+  posterState?: "all" | "missing" | "auto" | "custom";
+  recentOnly?: boolean;
+  needsReviewOnly?: boolean;
+  page?: number;
 };
 
 const DEFAULT_MEDIA_PAGE_SIZE = 100;
@@ -338,6 +349,169 @@ export async function getMediaItemById(id: string) {
     },
     sourceFolderName: getSourceFolderName(mediaItem.folderPath, mediaItem.library.path),
   } satisfies MediaItemRecord;
+}
+
+export async function getPosterReviewData(params: PosterReviewFilterParams) {
+  const prismaWithTag = prisma as typeof prisma & {
+    tag: {
+      findMany: (args: unknown) => Promise<Array<{ id: string; name: string }>>;
+    };
+  };
+  const currentPage = Math.max(params.page ?? 1, 1);
+  const pageSize = 24;
+  const sourceFolder = params.sourceFolder?.trim() ?? "";
+  const posterState = params.posterState ?? "all";
+  const recentOnly = params.recentOnly ?? false;
+  const needsReviewOnly = params.needsReviewOnly ?? false;
+
+  const where: Record<string, unknown> = {
+    missing: false,
+    ...(params.libraryId ? { libraryId: params.libraryId } : {}),
+    ...(recentOnly
+      ? {
+          updatedAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          },
+        }
+      : {}),
+    ...(needsReviewOnly
+      ? {
+          tags: {
+            some: {
+              name: {
+                equals: "needs-review",
+                mode: "insensitive",
+              },
+            },
+          },
+        }
+      : {}),
+    storyboardPaths: {
+      isEmpty: false,
+    },
+  };
+
+  const [rawItems, libraries, tags] = await Promise.all([
+    prisma.mediaItem.findMany({
+      where: where as never,
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+          orderBy: {
+            name: "asc",
+          },
+        },
+        library: {
+          select: {
+            id: true,
+            name: true,
+            path: true,
+          },
+        },
+      } as never,
+      orderBy: [{ updatedAt: "desc" }, { fileName: "asc" }] as never,
+      take: 400,
+    } as never),
+    prisma.library.findMany({
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
+    prismaWithTag.tag.findMany({
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    }) as Promise<Array<{ id: string; name: string }>>,
+  ]) as [
+    Array<
+      Omit<MediaBrowserItemRecord, "library"> & {
+        library: {
+          id: string;
+          name: string;
+          path: string;
+        };
+      }
+    >,
+    Array<{ id: string; name: string }>,
+    Array<{ id: string; name: string }>,
+  ];
+
+  const libraryAvailability = await getStorageAvailabilityMap(
+    libraries.map((library) => ({
+      id: library.id,
+      path: rawItems.find((item) => item.library.id === library.id)?.library.path ?? "",
+    })).filter((library) => library.path),
+  );
+
+  const enrichedItems = rawItems.map((mediaItem) => ({
+    ...mediaItem,
+    library: {
+      ...mediaItem.library,
+      displayName: getLibraryFolderName(mediaItem.library.path),
+      storageAvailable: libraryAvailability.get(mediaItem.library.id)?.available ?? false,
+    },
+    sourceFolderName: getSourceFolderName(mediaItem.folderPath, mediaItem.library.path),
+  })) as MediaBrowserItemRecord[];
+
+  const filteredItems = enrichedItems.filter((mediaItem) => {
+    const matchesSourceFolder = sourceFolder
+      ? mediaItem.sourceFolderName.localeCompare(sourceFolder, undefined, { sensitivity: "accent" }) === 0
+      : true;
+
+    if (!matchesSourceFolder) {
+      return false;
+    }
+
+    switch (posterState) {
+      case "missing":
+        return !mediaItem.thumbnailPath;
+      case "auto":
+        return mediaItem.posterSelectionMode !== "CUSTOM";
+      case "custom":
+        return mediaItem.posterSelectionMode === "CUSTOM";
+      case "all":
+      default:
+        return true;
+    }
+  });
+
+  const sourceFolders = Array.from(
+    new Set(enrichedItems.map((mediaItem) => mediaItem.sourceFolderName).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b));
+
+  const totalCount = filteredItems.length;
+  const totalPages = Math.max(Math.ceil(totalCount / pageSize), 1);
+  const safePage = Math.min(currentPage, totalPages);
+  const pageItems = filteredItems.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  return {
+    items: pageItems,
+    libraries,
+    sourceFolders,
+    tags,
+    totalCount,
+    currentPage: safePage,
+    totalPages,
+    pageSize,
+    filters: {
+      libraryId: params.libraryId ?? "",
+      sourceFolder,
+      posterState,
+      recentOnly,
+      needsReviewOnly,
+    },
+  };
 }
 
 function getOrderBy(sort: MediaSort): Prisma.MediaItemOrderByWithRelationInput[] {

@@ -163,14 +163,14 @@ export function MediaCardPlayer({
       className={clsx(
         "transition",
         cardSpanClass,
-        thumbnailOnlyView && !isActive
+        thumbnailOnlyView
           ? "overflow-hidden rounded-[22px] border border-white/10 bg-surface/60 p-0 shadow-panel sm:rounded-[24px]"
           : "rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[28px]",
       )}
     >
       <div
         className={clsx(
-          isActive ? "space-y-4" : thumbnailOnlyView ? "" : "space-y-3 sm:block",
+          thumbnailOnlyView ? "" : isActive ? "space-y-4" : "space-y-3 sm:block",
         )}
       >
       <div
@@ -345,7 +345,7 @@ export function MediaCardPlayer({
         )}
       </div>
 
-      {!thumbnailOnlyView || isActive ? (
+      {!thumbnailOnlyView ? (
       <div className={clsx("min-w-0 flex-1", isActive ? "" : compactDensity ? "mt-1 sm:mt-2" : "mt-1 sm:mt-4")}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">

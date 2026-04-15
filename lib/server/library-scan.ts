@@ -166,6 +166,8 @@ export async function scanLibraryById(libraryId: string) {
         fileName: file.fileName,
         title: null,
         thumbnailPath: null,
+        posterSelectionMode: "AUTO",
+        posterReviewedAt: null,
         storyboardPaths: [],
         storyboardTimestamps: [],
         extension: file.extension,
@@ -197,12 +199,16 @@ export async function scanLibraryById(libraryId: string) {
             : undefined,
       };
 
-      await prisma.mediaItem.upsert({
+      const mediaRecord = await prisma.mediaItem.upsert({
         where: {
           fullPath: file.fullPath,
         },
         create: createData as never,
         update: updateData as never,
+        select: {
+          id: true,
+          posterSelectionMode: true,
+        },
       });
 
       processedCount += 1;
@@ -216,8 +222,9 @@ export async function scanLibraryById(libraryId: string) {
           durationSeconds: storyboard.durationSeconds ?? undefined,
         };
 
-        if (thumbnailPath) {
+        if (thumbnailPath && mediaRecord.posterSelectionMode !== "CUSTOM") {
           enrichmentData.thumbnailPath = thumbnailPath;
+          enrichmentData.posterSelectionMode = "AUTO";
         }
 
         if (storyboard.frames.length > 0) {

@@ -1,0 +1,3 @@
+ALTER TABLE "MediaItem"
+ADD COLUMN "posterSelectionMode" TEXT NOT NULL DEFAULT 'AUTO',
+ADD COLUMN "posterReviewedAt" TIMESTAMP(3);

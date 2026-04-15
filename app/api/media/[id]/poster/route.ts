@@ -13,6 +13,9 @@ export async function POST(request: Request, { params }: MediaPosterRouteProps) 
   const formData = await request.formData();
   const storyboardPath = String(formData.get("storyboardPath") ?? "").trim();
   const returnTo = String(formData.get("returnTo") ?? "").trim();
+  const wantsJson =
+    request.headers.get("accept")?.includes("application/json") ||
+    new URL(request.url).searchParams.get("format") === "json";
   const fallbackUrl = new URL("/media", request.url);
 
   const redirectTo = (() => {
@@ -34,6 +37,9 @@ export async function POST(request: Request, { params }: MediaPosterRouteProps) 
   })();
 
   if (!storyboardPath) {
+    if (wantsJson) {
+      return NextResponse.json({ ok: false, error: "missing-storyboard" }, { status: 400 });
+    }
     return NextResponse.redirect(redirectTo, 303);
   }
 
@@ -46,10 +52,16 @@ export async function POST(request: Request, { params }: MediaPosterRouteProps) 
   });
 
   if (!mediaItem) {
+    if (wantsJson) {
+      return NextResponse.json({ ok: false, error: "missing-media" }, { status: 404 });
+    }
     return NextResponse.redirect(fallbackUrl, 303);
   }
 
   if (!mediaItem.storyboardPaths.includes(storyboardPath)) {
+    if (wantsJson) {
+      return NextResponse.json({ ok: false, error: "invalid-storyboard" }, { status: 400 });
+    }
     return NextResponse.redirect(redirectTo, 303);
   }
 
@@ -57,11 +69,22 @@ export async function POST(request: Request, { params }: MediaPosterRouteProps) 
     where: { id },
     data: {
       thumbnailPath: storyboardPath,
+      posterSelectionMode: "CUSTOM",
+      posterReviewedAt: new Date(),
     },
   });
 
   revalidatePath(`/media/${id}`);
   revalidatePath("/media");
+  revalidatePath("/media/posters");
+
+  if (wantsJson) {
+    return NextResponse.json({
+      ok: true,
+      mediaId: id,
+      thumbnailPath: storyboardPath,
+    });
+  }
 
   return NextResponse.redirect(redirectTo, 303);
 }

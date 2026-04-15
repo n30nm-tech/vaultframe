@@ -37,6 +37,8 @@ model MediaItem {
   fileName        String
   title           String?
   thumbnailPath   String?
+  posterSelectionMode String @default("AUTO")
+  posterReviewedAt DateTime?
   storyboardPaths String[] @default([])
   storyboardTimestamps Float[] @default([])
   extension       String

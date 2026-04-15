@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaBrowser } from "@/components/media/media-browser";
@@ -50,11 +51,19 @@ export default async function MediaPage({ searchParams }: MediaPageProps) {
 
   return (
     <div>
-      <PageHeader
-        eyebrow="Media"
-        title="Browse scanned media"
-        description="Search, filter, and sort persisted media records across your saved libraries."
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <PageHeader
+          eyebrow="Media"
+          title="Browse scanned media"
+          description="Search, filter, and sort persisted media records across your saved libraries."
+        />
+        <Link
+          href="/media/posters"
+          className="inline-flex shrink-0 items-center justify-center rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/[0.04] hover:text-white"
+        >
+          Poster Review
+        </Link>
+      </div>
       <MediaBrowser data={data} />
     </div>
   );
