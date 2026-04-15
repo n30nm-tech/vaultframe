@@ -331,7 +331,7 @@ export function PosterReviewBoard({ data }: PosterReviewBoardProps) {
             ) : null}
           </div>
 
-          <div className="space-y-5 rounded-[32px] border border-white/10 bg-surface/80 p-5 shadow-panel sm:p-6">
+          <div className="space-y-5 rounded-[32px] border border-white/10 bg-surface/80 p-5 shadow-panel sm:p-6 xl:sticky xl:top-24 xl:self-start">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h2 className="text-2xl font-semibold tracking-tight text-white">
