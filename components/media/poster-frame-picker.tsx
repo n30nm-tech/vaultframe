@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import { Check, ImagePlus } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type PosterFramePickerProps = {
   mediaId: string;
@@ -17,6 +20,20 @@ export function PosterFramePicker({
   posterPath,
   storyboards,
 }: PosterFramePickerProps) {
+  const [returnTo, setReturnTo] = useState("/media");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedUrl = window.sessionStorage.getItem("vaultframe-media-return-url");
+
+    if (storedUrl) {
+      setReturnTo(storedUrl);
+    }
+  }, []);
+
   if (storyboards.length === 0) {
     return null;
   }
@@ -42,6 +59,7 @@ export function PosterFramePicker({
           return (
             <form key={storyboard.path} action={`/api/media/${mediaId}/poster`} method="post">
               <input type="hidden" name="storyboardPath" value={storyboard.path} />
+              <input type="hidden" name="returnTo" value={returnTo} />
 
               <button
                 type="submit"
