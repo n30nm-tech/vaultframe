@@ -13,10 +13,14 @@ type MediaDetailPageProps = {
   params: Promise<{
     id: string;
   }>;
+  searchParams?: Promise<{
+    poster?: string;
+  }>;
 };
 
-export default async function MediaDetailPage({ params }: MediaDetailPageProps) {
+export default async function MediaDetailPage({ params, searchParams }: MediaDetailPageProps) {
   const { id } = await params;
+  const query = searchParams ? await searchParams : undefined;
   const [mediaItem, allTags] = await Promise.all([getMediaItemById(id), listTags()]);
 
   if (!mediaItem) {
@@ -50,6 +54,22 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
         title={mediaItem.title?.trim() || mediaItem.fileName}
         description="Play the media, review storyboard frames, and inspect the stored record details."
       />
+
+      {query?.poster === "updated" ? (
+        <div className="mb-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          Poster updated.
+        </div>
+      ) : null}
+      {query?.poster === "invalid" ? (
+        <div className="mb-6 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          That storyboard frame could not be used as the poster.
+        </div>
+      ) : null}
+      {query?.poster === "missing" ? (
+        <div className="mb-6 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          No storyboard frame was selected.
+        </div>
+      ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">

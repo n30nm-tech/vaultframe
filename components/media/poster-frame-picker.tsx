@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Check, ImagePlus } from "lucide-react";
-import { setMediaPosterFromStoryboardFormAction } from "@/app/media/[id]/actions";
 
 type PosterFramePickerProps = {
   mediaId: string;
@@ -41,8 +40,7 @@ export function PosterFramePicker({
           const isCurrentPoster = storyboard.path === posterPath;
 
           return (
-            <form key={storyboard.path} action={setMediaPosterFromStoryboardFormAction}>
-              <input type="hidden" name="mediaItemId" value={mediaId} />
+            <form key={storyboard.path} action={`/api/media/${mediaId}/poster`} method="post">
               <input type="hidden" name="storyboardPath" value={storyboard.path} />
 
               <button
