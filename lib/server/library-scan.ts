@@ -449,6 +449,29 @@ async function runScanCycle() {
   });
 
   if (!nextQueuedLibrary) {
+    const autoQueuedLibrary = await prisma.library.findFirst({
+      where: {
+        enabled: true,
+        scanStatus: "IDLE",
+        lastScannedAt: null,
+      },
+      orderBy: [{ createdAt: "asc" }, { updatedAt: "asc" }],
+      select: {
+        id: true,
+      },
+    });
+
+    if (!autoQueuedLibrary) {
+      return;
+    }
+
+    await updateLibraryScanState(autoQueuedLibrary.id, {
+      scanStatus: "QUEUED",
+      scanQueuedAt: new Date(),
+      scanError: null,
+    });
+
+    await runScanCycle();
     return;
   }
 
