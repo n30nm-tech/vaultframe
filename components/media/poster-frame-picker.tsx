@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Check, ImagePlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, ImagePlus, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type PosterFramePickerProps = {
@@ -20,7 +21,10 @@ export function PosterFramePicker({
   posterPath,
   storyboards,
 }: PosterFramePickerProps) {
+  const router = useRouter();
   const [returnTo, setReturnTo] = useState("/media");
+  const [savingPath, setSavingPath] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -37,6 +41,41 @@ export function PosterFramePicker({
   if (storyboards.length === 0) {
     return null;
   }
+
+  const updatePoster = async (storyboardPath: string) => {
+    setSavingPath(storyboardPath);
+    setError(null);
+
+    const formData = new FormData();
+    formData.set("storyboardPath", storyboardPath);
+    formData.set("returnTo", returnTo);
+
+    try {
+      const response = await fetch(`/api/media/${mediaId}/poster?format=json`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Poster update failed.");
+      }
+
+      if (returnTo) {
+        router.push(returnTo);
+        router.refresh();
+        return;
+      }
+
+      router.refresh();
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Poster update failed.");
+    } finally {
+      setSavingPath(null);
+    }
+  };
 
   return (
     <section className="rounded-[32px] border border-white/10 bg-surface/80 p-6 shadow-panel">
@@ -55,63 +94,68 @@ export function PosterFramePicker({
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
         {storyboards.map((storyboard, index) => {
           const isCurrentPoster = storyboard.path === posterPath;
+          const isSaving = savingPath === storyboard.path;
 
           return (
-            <form key={storyboard.path} action={`/api/media/${mediaId}/poster`} method="post">
-              <input type="hidden" name="storyboardPath" value={storyboard.path} />
-              <input type="hidden" name="returnTo" value={returnTo} />
-
-              <button
-                type="submit"
-                disabled={isCurrentPoster}
-                className={`group block w-full text-left transition ${
-                  isCurrentPoster ? "cursor-default" : "hover:opacity-100"
+            <button
+              key={storyboard.path}
+              type="button"
+              onClick={() => void updatePoster(storyboard.path)}
+              disabled={isCurrentPoster || Boolean(savingPath)}
+              className={`group block w-full text-left transition ${
+                isCurrentPoster ? "cursor-default" : "hover:opacity-100"
+              }`}
+            >
+              <div
+                className={`relative aspect-video overflow-hidden rounded-[22px] border bg-black/30 ${
+                  isCurrentPoster
+                    ? "border-emerald-400/40 ring-1 ring-emerald-400/30"
+                    : "border-white/10 group-hover:border-accent/30"
                 }`}
               >
-                <div
-                  className={`relative aspect-video overflow-hidden rounded-[22px] border bg-black/30 ${
-                    isCurrentPoster
-                      ? "border-emerald-400/40 ring-1 ring-emerald-400/30"
-                      : "border-white/10 group-hover:border-accent/30"
-                  }`}
-                >
-                  <Image
-                    src={storyboard.path}
-                    alt={`${title} poster option ${index + 1}`}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/85 via-black/30 to-transparent px-3 py-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
-                      Frame {index + 1}
-                    </span>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                        isCurrentPoster
-                          ? "border-emerald-300/30 bg-emerald-400/20 text-emerald-100"
-                          : "border-white/15 bg-black/55 text-white"
-                      }`}
-                    >
-                      {isCurrentPoster ? (
-                        <>
-                          <Check className="h-3 w-3" />
-                          Current
-                        </>
-                      ) : (
-                        <>
-                          <ImagePlus className="h-3 w-3" />
-                          Use
-                        </>
-                      )}
-                    </span>
-                  </div>
+                <Image
+                  src={storyboard.path}
+                  alt={`${title} poster option ${index + 1}`}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/85 via-black/30 to-transparent px-3 py-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
+                    Frame {index + 1}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                      isCurrentPoster
+                        ? "border-emerald-300/30 bg-emerald-400/20 text-emerald-100"
+                        : "border-white/15 bg-black/55 text-white"
+                    }`}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Saving
+                      </>
+                    ) : isCurrentPoster ? (
+                      <>
+                        <Check className="h-3 w-3" />
+                        Current
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="h-3 w-3" />
+                        Use
+                      </>
+                    )}
+                  </span>
                 </div>
-              </button>
-            </form>
+              </div>
+            </button>
           );
         })}
       </div>
+
+      {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
     </section>
   );
 }
