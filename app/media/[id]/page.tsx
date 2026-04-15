@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { BackToMediaButton } from "@/components/media/back-to-media-button";
 import { MediaDetailPlayer } from "@/components/media/media-detail-player";
+import { PosterFramePicker } from "@/components/media/poster-frame-picker";
 import { MediaTagManager } from "@/components/media/media-tag-manager";
 import { getMediaItemById } from "@/lib/data/media";
 import { listTags } from "@/lib/data/tags";
@@ -61,6 +62,13 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
               storyboards={storyboards}
             />
           </div>
+
+          <PosterFramePicker
+            mediaId={mediaItem.id}
+            title={mediaItem.title?.trim() || mediaItem.fileName}
+            posterPath={mediaItem.thumbnailPath}
+            storyboards={storyboards}
+          />
 
           <MediaTagManager
             mediaItemId={mediaItem.id}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FolderPlus, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FolderPlus, LoaderCircle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LibraryCard } from "@/components/libraries/library-card";
 import { LibraryFormSheet } from "@/components/libraries/library-form-sheet";
@@ -16,9 +16,19 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedLibrary, setSelectedLibrary] = useState<LibraryRecord | undefined>(undefined);
   const [sheetKey, setSheetKey] = useState(0);
+  const pendingScrollRestoreRef = useRef<number | null>(null);
   const hasActiveScan = libraries.some(
     (library) => library.scanStatus === "RUNNING" || library.scanStatus === "QUEUED",
   );
+  const runningLibrary = libraries.find((library) => library.scanStatus === "RUNNING");
+  const queuedCount = libraries.filter((library) => library.scanStatus === "QUEUED").length;
+  const needsScanCount = libraries.filter(
+    (library) =>
+      library.enabled &&
+      library.scanStatus === "IDLE" &&
+      library.mediaFileCount === 0 &&
+      !library.lastScannedAt,
+  ).length;
 
   useEffect(() => {
     if (!hasActiveScan) {
@@ -26,6 +36,7 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
     }
 
     const interval = window.setInterval(() => {
+      pendingScrollRestoreRef.current = window.scrollY;
       router.refresh();
     }, 2500);
 
@@ -33,6 +44,21 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
       window.clearInterval(interval);
     };
   }, [hasActiveScan, router]);
+
+  useEffect(() => {
+    if (pendingScrollRestoreRef.current === null) {
+      return;
+    }
+
+    const scrollTop = pendingScrollRestoreRef.current;
+    pendingScrollRestoreRef.current = null;
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: scrollTop, behavior: "auto" });
+      });
+    });
+  }, [libraries]);
 
   const openCreate = () => {
     setSelectedLibrary(undefined);
@@ -74,6 +100,51 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
         </button>
       </section>
 
+      <section className="mt-6 grid gap-3 md:grid-cols-3">
+        <StatusCard
+          label="Needs first scan"
+          value={String(needsScanCount)}
+          detail={
+            needsScanCount > 0
+              ? "Enabled libraries with no indexed files yet."
+              : "All enabled libraries have been scanned at least once."
+          }
+        />
+        <StatusCard
+          label="Scanning now"
+          value={runningLibrary ? runningLibrary.name : "Idle"}
+          detail={
+            runningLibrary
+              ? `${runningLibrary.scanFilesScanned} checked, ${runningLibrary.scanVideosFound} indexed.`
+              : "No library is currently scanning."
+          }
+          accent={Boolean(runningLibrary)}
+        />
+        <StatusCard
+          label="Queued behind"
+          value={String(queuedCount)}
+          detail={
+            queuedCount > 0
+              ? "These libraries will start automatically in the background."
+              : "No additional libraries are waiting."
+          }
+        />
+      </section>
+
+      {(runningLibrary || needsScanCount > 0 || queuedCount > 0) ? (
+        <section className="mt-6 rounded-[28px] border border-sky-400/20 bg-sky-400/10 px-5 py-4 text-sm text-sky-50 sm:rounded-[32px] sm:px-6">
+          <div className="flex items-start gap-3">
+            <LoaderCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="space-y-1">
+              <p className="font-medium">Background scanning is active.</p>
+              <p className="text-sky-100/90">
+                The app will keep working through enabled libraries that have never been scanned, one at a time. The page now preserves your place while it refreshes.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {libraries.length === 0 ? (
         <section className="mt-6 rounded-[28px] border border-dashed border-white/15 bg-white/[0.02] px-5 py-12 text-center sm:rounded-[32px] sm:px-8 sm:py-16">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-accent/10 text-accent">
@@ -109,5 +180,31 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
         onClose={closeSheet}
       />
     </>
+  );
+}
+
+function StatusCard({
+  label,
+  value,
+  detail,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[24px] border p-4 shadow-panel ${
+        accent
+          ? "border-sky-400/20 bg-sky-400/10"
+          : "border-white/10 bg-surface/60"
+      }`}
+    >
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{label}</p>
+      <p className="mt-3 text-lg font-semibold tracking-tight text-white">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
+    </div>
   );
 }

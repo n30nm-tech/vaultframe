@@ -18,9 +18,19 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
     !library.enabled ||
     library.scanStatus === "RUNNING" ||
     library.scanStatus === "QUEUED";
+  const isRunning = library.scanStatus === "RUNNING";
+  const isQueued = library.scanStatus === "QUEUED";
 
   return (
-    <article className="rounded-[24px] border border-white/10 bg-surface/80 p-4 shadow-panel sm:rounded-[28px] sm:p-6">
+    <article
+      className={`rounded-[24px] border p-4 shadow-panel transition sm:rounded-[28px] sm:p-6 ${
+        isRunning
+          ? "border-sky-400/30 bg-sky-400/10 ring-1 ring-sky-400/20"
+          : isQueued
+            ? "border-indigo-400/20 bg-indigo-400/10"
+            : "border-white/10 bg-surface/80"
+      }`}
+    >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
@@ -34,6 +44,16 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
             >
               {library.enabled ? "Enabled" : "Disabled"}
             </span>
+            {isRunning ? (
+              <span className="rounded-full border border-sky-400/20 bg-sky-400/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">
+                Active Scan
+              </span>
+            ) : null}
+            {isQueued ? (
+              <span className="rounded-full border border-indigo-400/20 bg-indigo-400/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-100">
+                Up Next
+              </span>
+            ) : null}
           </div>
           <div className="mt-4 flex items-start gap-3 text-slate-400">
             <Folder className="mt-0.5 h-4 w-4 shrink-0" />
