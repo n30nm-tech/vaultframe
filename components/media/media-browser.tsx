@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Film, SearchX } from "lucide-react";
 import { MediaCardPlayer } from "@/components/media/media-card-player";
 import { MediaFilterBar } from "@/components/media/media-filter-bar";
 import type { getMediaBrowserData } from "@/lib/data/media";
+
+const MEDIA_RETURN_URL_KEY = "vaultframe-media-return-url";
+const MEDIA_RETURN_SCROLL_KEY = "vaultframe-media-return-scroll";
 
 type MediaBrowserProps = {
   data: Awaited<ReturnType<typeof getMediaBrowserData>>;
@@ -21,6 +24,36 @@ export function MediaBrowser({ data }: MediaBrowserProps) {
   const compactDensity = data.filters.thumbnailDensity === "compact";
   const rangeStart = hasResults ? (data.currentPage - 1) * data.pageSize + 1 : 0;
   const rangeEnd = hasResults ? rangeStart + data.visibleCount - 1 : 0;
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+    const storedUrl = window.sessionStorage.getItem(MEDIA_RETURN_URL_KEY);
+    const storedScroll = window.sessionStorage.getItem(MEDIA_RETURN_SCROLL_KEY);
+
+    if (!storedUrl || storedUrl !== currentUrl || !storedScroll) {
+      return;
+    }
+
+    const scrollTarget = Number(storedScroll);
+
+    if (!Number.isFinite(scrollTarget)) {
+      return;
+    }
+
+    const restore = () => {
+      window.scrollTo({ top: scrollTarget, behavior: "auto" });
+      window.sessionStorage.removeItem(MEDIA_RETURN_URL_KEY);
+      window.sessionStorage.removeItem(MEDIA_RETURN_SCROLL_KEY);
+    };
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(restore);
+    });
+  }, []);
 
   const changePage = (page: number) => {
     const query = new URLSearchParams();

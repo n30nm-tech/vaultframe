@@ -114,6 +114,21 @@ export function MediaCardPlayer({
   const canPreviewStoryboard = !isActive && mediaItem.storyboardPaths.length > 1;
   const folderLabel = getFolderBreadcrumbLabel(mediaItem.folderPath, mediaItem.library.path);
 
+  const rememberMediaScrollPosition = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.sessionStorage.setItem(
+      "vaultframe-media-return-url",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    window.sessionStorage.setItem(
+      "vaultframe-media-return-scroll",
+      String(window.scrollY),
+    );
+  };
+
   const handlePreviewToggle = () => {
     if (!canPreviewStoryboard) {
       return;
@@ -420,7 +435,11 @@ export function MediaCardPlayer({
                 ? "Poster ready"
                 : "Poster pending"}
           </span>
-          <Link href={`/media/${mediaItem.id}`} className="transition hover:text-white">
+          <Link
+            href={`/media/${mediaItem.id}`}
+            onClick={rememberMediaScrollPosition}
+            className="transition hover:text-white"
+          >
             Details
           </Link>
         </div>

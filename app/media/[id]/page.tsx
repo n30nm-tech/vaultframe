@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { BackToMediaButton } from "@/components/media/back-to-media-button";
 import { MediaDetailPlayer } from "@/components/media/media-detail-player";
 import { MediaTagManager } from "@/components/media/media-tag-manager";
 import { getMediaItemById } from "@/lib/data/media";
@@ -40,6 +41,9 @@ export default async function MediaDetailPage({ params }: MediaDetailPageProps) 
 
   return (
     <div>
+      <div className="mb-4">
+        <BackToMediaButton />
+      </div>
       <PageHeader
         eyebrow="Media"
         title={mediaItem.title?.trim() || mediaItem.fileName}
