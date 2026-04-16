@@ -220,6 +220,19 @@ export function getExpiredSessionCookieOptions() {
 }
 
 export function getExternalBaseUrl(request: Request) {
+  const configuredBaseUrl =
+    process.env.APP_BASE_URL?.trim() ||
+    process.env.PUBLIC_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configuredBaseUrl) {
+    try {
+      return new URL(configuredBaseUrl);
+    } catch {
+      // Fall through to forwarded/request-derived values.
+    }
+  }
+
   const fallback = new URL(request.url);
   const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
