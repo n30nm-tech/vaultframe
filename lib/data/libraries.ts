@@ -129,8 +129,19 @@ export async function createLibrariesFromSubfolders(values: {
   const existingPaths = new Set(existingLibraries.map((library) => library.path));
   const librariesToCreate = importableFolders.filter((folder) => !existingPaths.has(folder.path));
 
+  const skippedFolders = importableFolders
+    .filter((folder) => existingPaths.has(folder.path))
+    .map((folder) => ({
+      name: path.basename(folder.path),
+      path: folder.path,
+    }));
+
   if (librariesToCreate.length === 0) {
-    throw new Error("All nested folders containing video files are already saved as libraries.");
+    return {
+      createdCount: 0,
+      skippedCount: skippedFolders.length,
+      skippedFolders,
+    };
   }
 
   await prisma.library.createMany({
@@ -144,7 +155,8 @@ export async function createLibrariesFromSubfolders(values: {
 
   return {
     createdCount: librariesToCreate.length,
-    skippedCount: importableFolders.length - librariesToCreate.length,
+    skippedCount: skippedFolders.length,
+    skippedFolders,
   };
 }
 

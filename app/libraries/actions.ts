@@ -20,6 +20,7 @@ export type LibraryActionState = {
   success: boolean;
   error?: string;
   message?: string;
+  duplicates?: string[];
   fields?: {
     name?: string;
     path?: string;
@@ -60,9 +61,24 @@ export async function createLibraryAction(
     if (parsed.values.importMode === "subfolders") {
       const result = await createLibrariesFromSubfolders(parsed.values);
       revalidatePath("/libraries");
+
+      if (result.createdCount === 0 && result.skippedCount > 0) {
+        return {
+          success: false,
+          error: "Those folders are already saved as libraries.",
+          duplicates: result.skippedFolders.map((folder) => folder.path),
+        };
+      }
+
+      const duplicateLabel =
+        result.skippedCount > 0
+          ? ` Skipped ${result.skippedCount} folder${result.skippedCount === 1 ? "" : "s"} already in the library list.`
+          : "";
+
       return {
         success: true,
-        message: `Created ${result.createdCount} libraries from subfolders.`,
+        message: `Created ${result.createdCount} libraries from subfolders.${duplicateLabel}`,
+        duplicates: result.skippedFolders.map((folder) => folder.path),
       };
     }
 

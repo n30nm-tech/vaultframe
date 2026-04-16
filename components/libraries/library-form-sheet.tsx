@@ -207,11 +207,36 @@ export function LibraryFormSheet({ library, open, onClose }: LibraryFormSheetPro
           {state.error ? (
             <div className="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
               {state.error}
+              {state.duplicates && state.duplicates.length > 0 ? (
+                <div className="mt-3 space-y-1 text-xs text-rose-100/90">
+                  {state.duplicates.slice(0, 8).map((duplicatePath) => (
+                    <div key={duplicatePath} className="break-all">
+                      {duplicatePath}
+                    </div>
+                  ))}
+                  {state.duplicates.length > 8 ? (
+                    <div>+{state.duplicates.length - 8} more already-saved folders</div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
           {state.message ? (
             <div className="mt-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
               {state.message}
+              {state.duplicates && state.duplicates.length > 0 ? (
+                <div className="mt-3 space-y-1 text-xs text-emerald-100/90">
+                  <div>Already saved and skipped:</div>
+                  {state.duplicates.slice(0, 8).map((duplicatePath) => (
+                    <div key={duplicatePath} className="break-all">
+                      {duplicatePath}
+                    </div>
+                  ))}
+                  {state.duplicates.length > 8 ? (
+                    <div>+{state.duplicates.length - 8} more already-saved folders</div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
