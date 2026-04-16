@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  buildExternalUrl,
   createAuthenticatedSession,
   getSessionCookieName,
   getSessionCookieOptions,
@@ -10,8 +11,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const password = String(formData.get("password") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "").trim();
-  const baseUrl = new URL(request.url);
-  const fallbackUrl = new URL("/", baseUrl);
+  const fallbackUrl = buildExternalUrl(request, "/");
 
   const safeRedirect = (() => {
     if (!returnTo.startsWith("/")) {
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     try {
-      return new URL(returnTo, baseUrl);
+      return buildExternalUrl(request, returnTo);
     } catch {
       return fallbackUrl;
     }
@@ -27,7 +27,10 @@ export async function POST(request: Request) {
 
   if (!(await verifyAppPassword(password))) {
     return NextResponse.redirect(
-      new URL(`/login?error=invalid&returnTo=${encodeURIComponent(returnTo || "/")}`, baseUrl),
+      buildExternalUrl(
+        request,
+        `/login?error=invalid&returnTo=${encodeURIComponent(returnTo || "/")}`,
+      ),
       303,
     );
   }

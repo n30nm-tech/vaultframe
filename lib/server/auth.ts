@@ -218,3 +218,26 @@ export function getExpiredSessionCookieOptions() {
     maxAge: 0,
   };
 }
+
+export function getExternalBaseUrl(request: Request) {
+  const fallback = new URL(request.url);
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host")?.split(",")[0]?.trim();
+
+  if (!host) {
+    return fallback;
+  }
+
+  const protocol = forwardedProto || fallback.protocol.replace(":", "");
+
+  try {
+    return new URL(`${protocol}://${host}`);
+  } catch {
+    return fallback;
+  }
+}
+
+export function buildExternalUrl(request: Request, target: string) {
+  return new URL(target, getExternalBaseUrl(request));
+}

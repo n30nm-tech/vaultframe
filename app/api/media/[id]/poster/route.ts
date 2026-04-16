@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAuthenticated } from "@/lib/server/auth";
+import { buildExternalUrl, getExternalBaseUrl, isAuthenticated } from "@/lib/server/auth";
 
 type MediaPosterRouteProps = {
   params: Promise<{
@@ -21,7 +21,8 @@ export async function POST(request: Request, { params }: MediaPosterRouteProps) 
   const wantsJson =
     request.headers.get("accept")?.includes("application/json") ||
     new URL(request.url).searchParams.get("format") === "json";
-  const fallbackUrl = new URL("/media", request.url);
+  const fallbackUrl = buildExternalUrl(request, "/media");
+  const externalBaseUrl = getExternalBaseUrl(request);
 
   const redirectTo = (() => {
     if (!returnTo) {
@@ -29,7 +30,7 @@ export async function POST(request: Request, { params }: MediaPosterRouteProps) 
     }
 
     try {
-      const candidate = new URL(returnTo, request.url);
+      const candidate = new URL(returnTo, externalBaseUrl);
 
       if (candidate.origin !== fallbackUrl.origin) {
         return fallbackUrl;

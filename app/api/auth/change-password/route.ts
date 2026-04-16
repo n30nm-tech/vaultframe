@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  buildExternalUrl,
   createAuthenticatedSession,
   getSessionCookieName,
   getSessionCookieOptions,
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   const currentPassword = String(formData.get("currentPassword") ?? "");
   const newPassword = String(formData.get("newPassword") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
-  const settingsUrl = new URL("/settings", request.url);
+  const settingsUrl = buildExternalUrl(request, "/settings");
   const authAlreadyEnabled = await isAuthEnabled();
 
   if (authAlreadyEnabled && !(await verifyAppPassword(currentPassword))) {
