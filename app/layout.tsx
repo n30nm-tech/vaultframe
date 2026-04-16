@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
+import { getAuthOverview } from "@/lib/server/auth";
 
 export const metadata: Metadata = {
   title: "VaultFrame",
   description: "Self-hosted media library for indexed video collections.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authOverview = await getAuthOverview();
+
   return (
     <html lang="en">
       <body>
-        <AppShell>{children}</AppShell>
+        <AppShell authEnabled={authOverview.enabled}>{children}</AppShell>
       </body>
     </html>
   );

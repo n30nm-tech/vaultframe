@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { isAuthenticated } from "@/lib/server/auth";
 import { getThumbnailDiskPath } from "@/lib/server/thumbnails";
 
 type ThumbnailRouteProps = {
@@ -10,6 +11,10 @@ type ThumbnailRouteProps = {
 };
 
 export async function GET(_request: Request, { params }: ThumbnailRouteProps) {
+  if (!(await isAuthenticated())) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   const { fileName } = await params;
 
   if (!/^[a-f0-9]+\.jpg$/i.test(fileName)) {

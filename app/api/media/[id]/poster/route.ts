@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isAuthenticated } from "@/lib/server/auth";
 
 type MediaPosterRouteProps = {
   params: Promise<{
@@ -9,6 +10,10 @@ type MediaPosterRouteProps = {
 };
 
 export async function POST(request: Request, { params }: MediaPosterRouteProps) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const formData = await request.formData();
   const storyboardPath = String(formData.get("storyboardPath") ?? "").trim();

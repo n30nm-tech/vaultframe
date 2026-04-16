@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { browseFolders, FolderBrowserError } from "@/lib/server/folder-browser";
+import { isAuthenticated } from "@/lib/server/auth";
 
 export async function GET(request: Request) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const requestedPath = searchParams.get("path") ?? undefined;
 

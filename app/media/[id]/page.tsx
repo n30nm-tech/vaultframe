@@ -5,6 +5,7 @@ import { MediaDetailPlayer } from "@/components/media/media-detail-player";
 import { PosterFramePicker } from "@/components/media/poster-frame-picker";
 import { MediaTagManager } from "@/components/media/media-tag-manager";
 import { getMediaItemById } from "@/lib/data/media";
+import { requirePageAuth } from "@/lib/server/auth";
 import { listTags } from "@/lib/data/tags";
 import { formatDuration, formatFileSize, getFolderBreadcrumbLabel } from "@/lib/media-presentation";
 import { FolderTree, HardDrive, TriangleAlert } from "lucide-react";
@@ -20,6 +21,7 @@ type MediaDetailPageProps = {
 
 export default async function MediaDetailPage({ params, searchParams }: MediaDetailPageProps) {
   const { id } = await params;
+  await requirePageAuth(`/media/${id}`);
   const query = searchParams ? await searchParams : undefined;
   const [mediaItem, allTags] = await Promise.all([getMediaItemById(id), listTags()]);
 

@@ -8,6 +8,7 @@ import {
   type TagRuleTarget,
   toggleTagRuleEnabled,
 } from "@/lib/data/tag-rules";
+import { assertAuthenticated } from "@/lib/server/auth";
 
 export type TagRuleActionState = {
   success: boolean;
@@ -24,6 +25,7 @@ export async function createTagRuleAction(
   formData: FormData,
 ): Promise<TagRuleActionState> {
   void prevState;
+  await assertAuthenticated();
 
   const name = String(formData.get("name") ?? "").trim();
   const target = String(formData.get("target") ?? "").trim() as TagRuleTarget;
@@ -76,6 +78,7 @@ export async function createTagRuleAction(
 }
 
 export async function toggleTagRuleEnabledAction(formData: FormData) {
+  await assertAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
   const enabled = String(formData.get("enabled") ?? "").trim() === "true";
 
@@ -88,6 +91,7 @@ export async function toggleTagRuleEnabledAction(formData: FormData) {
 }
 
 export async function deleteTagRuleAction(formData: FormData) {
+  await assertAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
 
   if (!id) {

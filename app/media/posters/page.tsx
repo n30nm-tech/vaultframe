@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { PosterReviewBoard } from "@/components/media/poster-review-board";
 import { getPosterReviewData } from "@/lib/data/media";
+import { requirePageAuth } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ type PosterReviewPageProps = {
 };
 
 export default async function PosterReviewPage({ searchParams }: PosterReviewPageProps) {
+  await requirePageAuth("/media/posters");
   const params = searchParams ? await searchParams : undefined;
   const data = await getPosterReviewData({
     libraryId: params?.libraryId,

@@ -9,6 +9,7 @@ import {
   type MediaThumbnailDensity,
   type MediaViewMode,
 } from "@/lib/data/media";
+import { requirePageAuth } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ type MediaPageProps = {
 };
 
 export default async function MediaPage({ searchParams }: MediaPageProps) {
+  await requirePageAuth("/media");
   const params = searchParams ? await searchParams : undefined;
   const cookieStore = await cookies();
   const storedFilterValue = cookieStore.get("vaultframe-media-filters")?.value;

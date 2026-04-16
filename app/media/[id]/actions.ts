@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { addExistingTagToMediaItem, removeTagFromMediaItem } from "@/lib/data/tags";
+import { assertAuthenticated } from "@/lib/server/auth";
 
 export type MediaTagActionState = {
   success: boolean;
@@ -29,6 +30,7 @@ export async function addMediaTagAction(
   formData: FormData,
 ): Promise<MediaTagActionState> {
   void prevState;
+  await assertAuthenticated();
 
   const mediaItemId = String(formData.get("mediaItemId") ?? "").trim();
   const tagId = String(formData.get("tagId") ?? "").trim();
@@ -58,6 +60,7 @@ export async function addMediaTagAction(
 }
 
 export async function removeMediaTagAction(formData: FormData) {
+  await assertAuthenticated();
   const mediaItemId = String(formData.get("mediaItemId") ?? "").trim();
   const tagId = String(formData.get("tagId") ?? "").trim();
 
@@ -75,6 +78,7 @@ export async function setMediaPosterFromStoryboardAction(
   formData: FormData,
 ): Promise<MediaPosterActionState> {
   void prevState;
+  await assertAuthenticated();
 
   const mediaItemId = String(formData.get("mediaItemId") ?? "").trim();
   const storyboardPath = String(formData.get("storyboardPath") ?? "").trim();

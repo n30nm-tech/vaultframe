@@ -14,6 +14,7 @@ import {
   getLibraryScanAvailability,
   isFolderBrowserError,
 } from "@/lib/server/library-scan";
+import { assertAuthenticated } from "@/lib/server/auth";
 
 export type LibraryActionState = {
   success: boolean;
@@ -47,6 +48,7 @@ export async function createLibraryAction(
   formData: FormData,
 ): Promise<LibraryActionState> {
   void prevState;
+  await assertAuthenticated();
   const parsed = parseLibraryFormData(formData);
 
   if ("error" in parsed) {
@@ -80,6 +82,7 @@ export async function updateLibraryAction(
   formData: FormData,
 ): Promise<LibraryActionState> {
   void prevState;
+  await assertAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
 
   if (!id) {
@@ -109,6 +112,7 @@ export async function updateLibraryAction(
 }
 
 export async function deleteLibraryAction(formData: FormData) {
+  await assertAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
 
   if (!id) {
@@ -120,6 +124,7 @@ export async function deleteLibraryAction(formData: FormData) {
 }
 
 export async function toggleLibraryEnabledAction(formData: FormData) {
+  await assertAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
   const enabled = String(formData.get("enabled") ?? "").trim() === "true";
 
@@ -136,6 +141,7 @@ export async function scanLibraryAction(
   formData: FormData,
 ): Promise<LibraryActionState> {
   void prevState;
+  await assertAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
 
   if (!id) {

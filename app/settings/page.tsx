@@ -1,13 +1,27 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { AuthSettingsPanel } from "@/components/settings/auth-settings-panel";
 import { SystemStatusPanel } from "@/components/settings/system-status-panel";
 import { TagRulesManager } from "@/components/settings/tag-rules-manager";
 import { getSettingsOverview } from "@/lib/data/settings";
+import { getAuthOverview, requirePageAuth } from "@/lib/server/auth";
 import { listTagRules } from "@/lib/data/tag-rules";
 
 export const dynamic = "force-dynamic";
 
-export default async function SettingsPage() {
-  const [rules, overview] = await Promise.all([listTagRules(), getSettingsOverview()]);
+type SettingsPageProps = {
+  searchParams?: Promise<{
+    auth?: string;
+  }>;
+};
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  await requirePageAuth("/settings");
+  const params = searchParams ? await searchParams : undefined;
+  const [rules, overview, authOverview] = await Promise.all([
+    listTagRules(),
+    getSettingsOverview(),
+    getAuthOverview(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -18,6 +32,7 @@ export default async function SettingsPage() {
       />
 
       <SystemStatusPanel overview={overview} />
+      <AuthSettingsPanel overview={authOverview} status={params?.auth} />
       <TagRulesManager rules={rules} />
     </div>
   );

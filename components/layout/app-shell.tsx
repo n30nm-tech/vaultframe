@@ -8,7 +8,12 @@ import { EyeOff, Film, Menu, Search, Shield, X } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { navigationItems } from "@/lib/navigation";
 
-export function AppShell({ children }: PropsWithChildren) {
+export function AppShell({
+  children,
+  authEnabled,
+}: PropsWithChildren<{
+  authEnabled: boolean;
+}>) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [panicBlurActive, setPanicBlurActive] = useState(false);
@@ -43,6 +48,10 @@ export function AppShell({ children }: PropsWithChildren) {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [panicArmed]);
+
+  if (pathname === "/login") {
+    return <div className="min-h-screen bg-background bg-hero-glow text-foreground">{children}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background bg-hero-glow text-foreground">
@@ -127,9 +136,22 @@ export function AppShell({ children }: PropsWithChildren) {
                   })}
                 </div>
 
-                <div className="hidden items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-slate-400 sm:flex">
-                  <Search className="h-4 w-4" />
-                  <span className="text-sm">Library, scan, thumbnails, and media browsing are live</span>
+                <div className="hidden items-center gap-3 sm:flex">
+                  {authEnabled ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = "/api/auth/logout";
+                      }}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+                    >
+                      Lock now
+                    </button>
+                  ) : null}
+                  <div className="hidden items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-slate-400 lg:flex">
+                    <Search className="h-4 w-4" />
+                    <span className="text-sm">Library, scan, thumbnails, and media browsing are live</span>
+                  </div>
                 </div>
               </div>
             </div>
