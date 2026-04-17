@@ -3,13 +3,15 @@
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { AlertTriangle, CalendarDays, Folder, HardDrive, ScanSearch, Trash2 } from "lucide-react";
-import { deleteLibraryAction, toggleLibraryEnabledAction } from "@/app/libraries/actions";
+import { toggleLibraryEnabledAction } from "@/app/libraries/actions";
 import { ScanLibraryForm } from "@/components/libraries/scan-library-form";
 import type { LibraryRecord } from "@/lib/data/libraries";
 
 type LibraryCardProps = {
   library: LibraryRecord;
   onEdit: (library: LibraryRecord) => void;
+  onDelete: (libraryIds: string[]) => void;
+  deletePending?: boolean;
   selected?: boolean;
   onToggleSelect?: (libraryId: string) => void;
 };
@@ -17,6 +19,8 @@ type LibraryCardProps = {
 export function LibraryCard({
   library,
   onEdit,
+  onDelete,
+  deletePending = false,
   selected = false,
   onToggleSelect,
 }: LibraryCardProps) {
@@ -96,7 +100,7 @@ export function LibraryCard({
           >
             Edit
           </button>
-          <DeleteButton id={library.id} />
+          <DeleteButton id={library.id} onDelete={onDelete} pending={deletePending} />
         </div>
       </div>
 
@@ -229,16 +233,25 @@ function ToggleForm({ id, enabled }: { id: string; enabled: boolean }) {
   );
 }
 
-function DeleteButton({ id }: { id: string }) {
+function DeleteButton({
+  id,
+  onDelete,
+  pending,
+}: {
+  id: string;
+  onDelete: (libraryIds: string[]) => void;
+  pending: boolean;
+}) {
   return (
-    <form action={deleteLibraryAction}>
-      <input type="hidden" name="id" value={id} />
-      <ActionSubmitButton
-        label="Delete"
-        icon={<Trash2 className="h-4 w-4" />}
-        danger
-      />
-    </form>
+    <button
+      type="button"
+      onClick={() => onDelete([id])}
+      disabled={pending}
+      className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-sm font-medium text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <Trash2 className="h-4 w-4" />
+      {pending ? "Working..." : "Delete"}
+    </button>
   );
 }
 

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FolderPlus, LoaderCircle, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { deleteLibrariesAction } from "@/app/libraries/actions";
 import { LibraryCard } from "@/components/libraries/library-card";
 import { LibraryFormSheet } from "@/components/libraries/library-form-sheet";
 import type { LibraryRecord } from "@/lib/data/libraries";
@@ -18,6 +17,9 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
   const [selectedLibrary, setSelectedLibrary] = useState<LibraryRecord | undefined>(undefined);
   const [sheetKey, setSheetKey] = useState(0);
   const [selectedLibraryIds, setSelectedLibraryIds] = useState<string[]>([]);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const pendingScrollRestoreRef = useRef<number | null>(null);
   const hasActiveScan = libraries.some(
     (library) => library.scanStatus === "RUNNING" || library.scanStatus === "QUEUED",
@@ -100,6 +102,58 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
     setSelectedLibraryIds(allVisibleSelected ? [] : libraries.map((library) => library.id));
   };
 
+  const handleDeleteLibraries = async (libraryIds: string[]) => {
+    if (libraryIds.length === 0 || deletePending) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      libraryIds.length === 1
+        ? "Delete this library?"
+        : `Delete ${libraryIds.length} libraries?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletePending(true);
+    setDeleteError(null);
+    setDeleteMessage(null);
+
+    try {
+      const response = await fetch("/api/libraries/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ ids: libraryIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Delete failed.");
+      }
+
+      const payload = (await response.json()) as { deletedCount?: number };
+      const deletedCount = payload.deletedCount ?? libraryIds.length;
+
+      setSelectedLibraryIds((currentIds) =>
+        currentIds.filter((id) => !libraryIds.includes(id)),
+      );
+      setDeleteMessage(
+        deletedCount === 1
+          ? "Library deleted."
+          : `${deletedCount} libraries deleted.`,
+      );
+      router.refresh();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Delete failed.");
+    } finally {
+      setDeletePending(false);
+    }
+  };
+
   return (
     <>
       <section className="flex flex-col gap-5 rounded-[28px] border border-white/10 bg-surface/80 p-5 shadow-panel sm:rounded-[32px] sm:p-6 lg:flex-row lg:items-end lg:justify-between">
@@ -138,12 +192,24 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
             </p>
           </div>
 
-          <form action={deleteLibrariesAction}>
-            {selectedLibraryIds.map((id) => (
-              <input key={id} type="hidden" name="ids" value={id} />
-            ))}
-            <BulkDeleteButton disabled={selectedLibraryIds.length === 0} />
-          </form>
+          <BulkDeleteButton
+            disabled={selectedLibraryIds.length === 0 || deletePending}
+            pending={deletePending}
+            count={selectedLibraryIds.length}
+            onDelete={() => void handleDeleteLibraries(selectedLibraryIds)}
+          />
+        </section>
+      ) : null}
+
+      {deleteMessage ? (
+        <section className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          {deleteMessage}
+        </section>
+      ) : null}
+
+      {deleteError ? (
+        <section className="mt-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          {deleteError}
         </section>
       ) : null}
 
@@ -219,6 +285,8 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
               key={library.id}
               library={library}
               onEdit={openEdit}
+              onDelete={(ids) => void handleDeleteLibraries(ids)}
+              deletePending={deletePending}
               selected={selectedLibraryIds.includes(library.id)}
               onToggleSelect={toggleLibrarySelected}
             />
@@ -236,15 +304,26 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
   );
 }
 
-function BulkDeleteButton({ disabled }: { disabled: boolean }) {
+function BulkDeleteButton({
+  disabled,
+  pending,
+  count,
+  onDelete,
+}: {
+  disabled: boolean;
+  pending: boolean;
+  count: number;
+  onDelete: () => void;
+}) {
   return (
     <button
-      type="submit"
+      type="button"
+      onClick={onDelete}
       disabled={disabled}
       className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-sm font-medium text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
     >
       <Trash2 className="h-4 w-4" />
-      Delete selected
+      {pending ? "Deleting..." : count > 0 ? `Delete selected (${count})` : "Delete selected"}
     </button>
   );
 }
