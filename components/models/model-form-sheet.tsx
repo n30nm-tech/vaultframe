@@ -20,12 +20,14 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
   const [pathValue, setPathValue] = useState("");
   const [chooserOpen, setChooserOpen] = useState(false);
   const [manualEditEnabled, setManualEditEnabled] = useState(false);
+  const [importMode, setImportMode] = useState<"single" | "subfolders">("single");
 
   useEffect(() => {
     if (!open) {
       setEnabled(true);
       setPathValue("");
       setManualEditEnabled(false);
+      setImportMode("single");
     }
   }, [open]);
 
@@ -68,15 +70,59 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
           <form action={formAction} className="flex flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
             <input type="hidden" name="enabled" value={String(enabled)} />
             <input type="hidden" name="path" value={pathValue} />
+            <input type="hidden" name="importMode" value={importMode} />
 
             <div className="space-y-5">
+              <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-sm font-medium text-slate-200">Import mode</p>
+                <p className="mt-1 text-sm leading-6 text-slate-400">
+                  Create one model from the selected folder, or create one model per first-level
+                  subfolder and import everything recursively underneath each one.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setImportMode("single")}
+                    className={`rounded-2xl border px-4 py-4 text-left transition ${
+                      importMode === "single"
+                        ? "border-accent/30 bg-accent/10"
+                        : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <p className="font-medium text-white">Single model</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Use one chosen folder as one model gallery.
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImportMode("subfolders")}
+                    className={`rounded-2xl border px-4 py-4 text-left transition ${
+                      importMode === "subfolders"
+                        ? "border-accent/30 bg-accent/10"
+                        : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <p className="font-medium text-white">One per subfolder</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Create a model from each first-level subfolder under the chosen parent.
+                    </p>
+                  </button>
+                </div>
+              </div>
+
               <Field
                 label="Model name"
                 name="name"
                 placeholder="Leave blank to use the folder name"
                 defaultValue=""
                 error={state.fields?.name}
-                helperText="Optional. If you leave this empty, the folder name will be used."
+                helperText={
+                  importMode === "subfolders"
+                    ? "Each created model will use its subfolder name automatically."
+                    : "Optional. If you leave this empty, the folder name will be used."
+                }
+                disabled={importMode === "subfolders"}
               />
 
               <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
@@ -156,6 +202,29 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
             {state.error ? (
               <div className="mt-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
                 {state.error}
+                {state.duplicates && state.duplicates.length > 0 ? (
+                  <div className="mt-3 space-y-1 text-xs text-rose-100/90">
+                    {state.duplicates.slice(0, 8).map((duplicatePath) => (
+                      <div key={duplicatePath} className="break-all">
+                        {duplicatePath}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {state.message ? (
+              <div className="mt-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                {state.message}
+                {state.duplicates && state.duplicates.length > 0 ? (
+                  <div className="mt-3 space-y-1 text-xs text-emerald-100/90">
+                    {state.duplicates.slice(0, 8).map((duplicatePath) => (
+                      <div key={duplicatePath} className="break-all">
+                        {duplicatePath}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -199,9 +268,10 @@ type FieldProps = {
   defaultValue: string;
   error?: string;
   helperText?: string;
+  disabled?: boolean;
 };
 
-function Field({ label, name, placeholder, defaultValue, error, helperText }: FieldProps) {
+function Field({ label, name, placeholder, defaultValue, error, helperText, disabled = false }: FieldProps) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-200">{label}</span>
@@ -209,7 +279,8 @@ function Field({ label, name, placeholder, defaultValue, error, helperText }: Fi
         name={name}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-accent/40 focus:bg-white/[0.05]"
+        disabled={disabled}
+        className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-accent/40 focus:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-50"
       />
       {helperText ? <span className="mt-2 block text-sm text-slate-400">{helperText}</span> : null}
       {error ? <span className="mt-2 block text-sm text-rose-300">{error}</span> : null}

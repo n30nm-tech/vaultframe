@@ -1,6 +1,6 @@
 # Changelog
 
-## v4.0.1 - Unreleased
+## v4.0.2 - Unreleased
 
 ### Added
 
@@ -10,7 +10,7 @@
 
 ### Changed
 
-- App branding now reflects the v4.0.1 release
+- App branding now reflects the v4.0.2 release
 - Media filter controls now include thumbnail density and thumbnail badge display options
 
 ## v3.2.0 - Unreleased

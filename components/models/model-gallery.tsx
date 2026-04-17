@@ -12,9 +12,11 @@ type ModelGalleryProps = {
 };
 
 type FilterMode = "all" | "photo" | "video";
+type ThumbnailSizeMode = "standard" | "compact";
 
 export function ModelGallery({ model }: ModelGalleryProps) {
   const [filter, setFilter] = useState<FilterMode>("all");
+  const [thumbnailSize, setThumbnailSize] = useState<ThumbnailSizeMode>("standard");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   const visibleAssets = useMemo(() => {
@@ -70,7 +72,7 @@ export function ModelGallery({ model }: ModelGalleryProps) {
 
   return (
     <div className="space-y-5">
-      <section className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-surface/80 p-5 shadow-panel sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-surface/80 p-5 shadow-panel">
         <div>
           <p className="text-sm uppercase tracking-[0.22em] text-slate-500">Gallery view</p>
           <h3 className="mt-2 text-xl font-semibold tracking-tight text-white">
@@ -78,22 +80,43 @@ export function ModelGallery({ model }: ModelGalleryProps) {
           </h3>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {(["all", "photo", "video"] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setFilter(mode)}
-              className={clsx(
-                "rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
-                filter === mode
-                  ? "border-accent/30 bg-accent/10 text-white"
-                  : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05] hover:text-white",
-              )}
-            >
-              {mode === "all" ? "All" : mode === "photo" ? "Photos" : "Videos"}
-            </button>
-          ))}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {(["all", "photo", "video"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setFilter(mode)}
+                className={clsx(
+                  "rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
+                  filter === mode
+                    ? "border-accent/30 bg-accent/10 text-white"
+                    : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05] hover:text-white",
+                )}
+              >
+                {mode === "all" ? "All" : mode === "photo" ? "Photos" : "Videos"}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Thumb size</span>
+            {(["standard", "compact"] as const).map((sizeMode) => (
+              <button
+                key={sizeMode}
+                type="button"
+                onClick={() => setThumbnailSize(sizeMode)}
+                className={clsx(
+                  "rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
+                  thumbnailSize === sizeMode
+                    ? "border-accent/30 bg-accent/10 text-white"
+                    : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05] hover:text-white",
+                )}
+              >
+                {sizeMode === "standard" ? "Standard" : "Compact"}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -103,7 +126,14 @@ export function ModelGallery({ model }: ModelGalleryProps) {
           body="Try switching between all assets, photos, and videos. This model stays separate from the main library browser, so only files inside the chosen model folder will appear here."
         />
       ) : (
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <section
+          className={clsx(
+            "grid gap-3",
+            thumbnailSize === "compact"
+              ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+              : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+          )}
+        >
           {visibleAssets.map((asset) => {
             const previewUrl = asset.assetType === "photo" ? asset.assetUrl : asset.thumbnailPath;
 
@@ -114,7 +144,12 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                 onClick={() => setSelectedAssetId(asset.id)}
                 className="group overflow-hidden rounded-[24px] border border-white/10 bg-[#0b1016] text-left shadow-panel transition hover:border-accent/30 hover:bg-white/[0.03]"
               >
-                <div className="relative aspect-[4/5] overflow-hidden bg-[#080b10]">
+                <div
+                  className={clsx(
+                    "relative overflow-hidden bg-[#080b10]",
+                    thumbnailSize === "compact" ? "aspect-[5/6]" : "aspect-[4/5]",
+                  )}
+                >
                   {previewUrl ? (
                     <Image
                       src={previewUrl}

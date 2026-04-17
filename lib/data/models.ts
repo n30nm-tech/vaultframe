@@ -375,6 +375,90 @@ export async function createModel(input: {
   return model;
 }
 
+export async function createModelsFromSubfolders(input: {
+  path: string;
+  enabled: boolean;
+}) {
+  const validatedPath = await validateLibraryPath(input.path);
+  const entries = await readdir(validatedPath, { withFileTypes: true });
+  const immediateSubfolders = entries
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => ({
+      name: entry.name,
+      path: path.join(validatedPath, entry.name),
+    }));
+
+  const existingModels = await prisma.model.findMany({
+    where: {
+      path: {
+        in: immediateSubfolders.map((folder) => folder.path),
+      },
+    },
+    select: {
+      path: true,
+    },
+  });
+  const existingPaths = new Set(existingModels.map((model) => model.path));
+  const foldersWithAssets: Array<{ name: string; path: string }> = [];
+  const skippedFolders: Array<{ name: string; path: string; reason: "exists" | "empty" }> = [];
+
+  for (const folder of immediateSubfolders) {
+    if (existingPaths.has(folder.path)) {
+      skippedFolders.push({ ...folder, reason: "exists" });
+      continue;
+    }
+
+    if (await folderContainsSupportedAssets(folder.path)) {
+      foldersWithAssets.push(folder);
+    } else {
+      skippedFolders.push({ ...folder, reason: "empty" });
+    }
+  }
+
+  if (foldersWithAssets.length === 0) {
+    return {
+      createdModels: [] as Array<{ id: string; name: string; path: string }>,
+      createdCount: 0,
+      skippedFolders,
+    };
+  }
+
+  const queuedAt = new Date();
+  const createdModels = await Promise.all(
+    foldersWithAssets.map((folder) =>
+      prisma.model.create({
+        data: {
+          name: folder.name,
+          path: folder.path,
+          enabled: input.enabled,
+          importStatus: "QUEUED",
+          importQueuedAt: queuedAt,
+          importStartedAt: null,
+          importFinishedAt: null,
+          importCurrentPath: null,
+          importTotalFiles: 0,
+          importFilesScanned: 0,
+          importPhotosFound: 0,
+          importVideosFound: 0,
+          importError: null,
+          lastImportedAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          path: true,
+        },
+      } as never),
+    ),
+  );
+
+  return {
+    createdModels,
+    createdCount: createdModels.length,
+    skippedFolders,
+  };
+}
+
 export async function deleteModel(id: string) {
   await prisma.model.delete({
     where: {
@@ -556,4 +640,41 @@ function getModelAssetType(extension: string) {
 
 export async function validateModelAssetStreamPath(fullPath: string, modelPath: string) {
   return validateMediaFilePath(fullPath, modelPath);
+}
+
+async function folderContainsSupportedAssets(rootPath: string) {
+  const queue = [rootPath];
+
+  while (queue.length > 0) {
+    const currentPath = queue.shift();
+
+    if (!currentPath) {
+      continue;
+    }
+
+    const entries = await readdir(currentPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) {
+        continue;
+      }
+
+      const entryPath = path.join(currentPath, entry.name);
+
+      if (entry.isDirectory()) {
+        queue.push(entryPath);
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      if (getModelAssetType(path.extname(entry.name).toLowerCase())) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }

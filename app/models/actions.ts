@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createModel } from "@/lib/data/models";
+import { createModel, createModelsFromSubfolders } from "@/lib/data/models";
 import { assertAuthenticated } from "@/lib/server/auth";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
 import { enqueueModelImport, ensureModelImportRunnerStarted } from "@/lib/server/model-import";
@@ -9,6 +9,8 @@ import { enqueueModelImport, ensureModelImportRunnerStarted } from "@/lib/server
 export type ModelActionState = {
   success: boolean;
   error?: string;
+  message?: string;
+  duplicates?: string[];
   fields?: {
     name?: string;
     path?: string;
@@ -28,10 +30,16 @@ export async function createModelAction(
   const name = String(formData.get("name") ?? "").trim();
   const path = String(formData.get("path") ?? "").trim();
   const enabled = String(formData.get("enabled") ?? "true") === "true";
+  const importMode =
+    String(formData.get("importMode") ?? "single") === "subfolders" ? "subfolders" : "single";
   const fields: ModelActionState["fields"] = {};
 
   if (!path) {
     fields.path = "Path is required.";
+  }
+
+  if (importMode === "single" && !name) {
+    // Optional by design; keep accepted.
   }
 
   if (fields.path) {
@@ -44,8 +52,35 @@ export async function createModelAction(
 
   try {
     await validateLibraryPath(path);
-    const model = await createModel({ name, path, enabled });
     ensureModelImportRunnerStarted();
+
+    if (importMode === "subfolders") {
+      const result = await createModelsFromSubfolders({ path, enabled });
+
+      await Promise.all(result.createdModels.map((model) => enqueueModelImport(model.id)));
+      revalidatePath("/models");
+
+      if (result.createdCount === 0) {
+        return {
+          success: false,
+          error: "No new model folders were created.",
+          duplicates: result.skippedFolders.map((folder) => `${folder.path} (${folder.reason})`),
+        };
+      }
+
+      const skippedSummary =
+        result.skippedFolders.length > 0
+          ? ` Skipped ${result.skippedFolders.length} folder${result.skippedFolders.length === 1 ? "" : "s"} that were already models or had no supported media.`
+          : "";
+
+      return {
+        success: true,
+        message: `Created ${result.createdCount} models from first-level subfolders.${skippedSummary}`,
+        duplicates: result.skippedFolders.map((folder) => `${folder.path} (${folder.reason})`),
+      };
+    }
+
+    const model = await createModel({ name, path, enabled });
     await enqueueModelImport(model.id);
     revalidatePath("/models");
     return { success: true };
