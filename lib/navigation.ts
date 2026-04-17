@@ -1,4 +1,4 @@
-import { BarChart3, FolderKanban, Library, Settings } from "lucide-react";
+import { BarChart3, FolderKanban, Library, Settings, UsersRound } from "lucide-react";
 
 export const navigationItems = [
   {
@@ -18,6 +18,12 @@ export const navigationItems = [
     href: "/media",
     icon: FolderKanban,
     description: "Browse indexed media and playback surfaces.",
+  },
+  {
+    title: "Models",
+    href: "/models",
+    icon: UsersRound,
+    description: "Browse separate model-specific photo and video galleries.",
   },
   {
     title: "Settings",

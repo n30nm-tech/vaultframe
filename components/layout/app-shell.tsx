@@ -81,7 +81,7 @@ export function AppShell({
                       VaultFrame control center
                     </h1>
                     <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent sm:text-[11px]">
-                      v3.3
+                      v4.0
                     </span>
                   </div>
                 </div>
@@ -183,7 +183,7 @@ export function AppShell({
                 <div className="flex items-center gap-2">
                   <p className="text-lg font-semibold tracking-tight text-white">VaultFrame</p>
                   <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-                    v3.3
+                    v4.0
                   </span>
                 </div>
                 <p className="text-sm text-slate-400">Self-hosted media library</p>
@@ -204,7 +204,10 @@ export function AppShell({
       ) : null}
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#090c11]/95 px-2 py-2 backdrop-blur xl:hidden">
-        <div className="grid grid-cols-4 gap-2">
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${navigationItems.length}, minmax(0, 1fr))` }}
+        >
           {navigationItems.map((item) => {
             const isActive =
               item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
@@ -242,7 +245,7 @@ function ShellNav({ pathname }: { pathname: string }) {
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold tracking-tight">VaultFrame</p>
             <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-              v3.3
+              v4.0
             </span>
           </div>
           <p className="text-sm text-slate-400">Self-hosted media library</p>
