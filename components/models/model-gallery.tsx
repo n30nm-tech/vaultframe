@@ -1,8 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ImageIcon, LoaderCircle, PlayCircle, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Expand,
+  ImageIcon,
+  LoaderCircle,
+  PauseCircle,
+  PlayCircle,
+  X,
+} from "lucide-react";
 import clsx from "clsx";
 import { PlaceholderCard } from "@/components/ui/placeholder-card";
 import type { ModelGalleryRecord } from "@/lib/data/models";
@@ -17,12 +26,15 @@ type ThumbnailSizeMode = "standard" | "compact";
 
 export function ModelGallery({ model }: ModelGalleryProps) {
   const router = useRouter();
+  const viewerRef = useRef<HTMLDivElement | null>(null);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [thumbnailSize, setThumbnailSize] = useState<ThumbnailSizeMode>("standard");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [previewingAssetId, setPreviewingAssetId] = useState<string | null>(null);
   const [coverSavingAssetId, setCoverSavingAssetId] = useState<string | null>(null);
   const [coverMessage, setCoverMessage] = useState<string | null>(null);
   const [coverError, setCoverError] = useState<string | null>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   const visibleAssets = useMemo(() => {
     return model.assets.filter((asset) => {
@@ -75,6 +87,43 @@ export function ModelGallery({ model }: ModelGalleryProps) {
     };
   }, [selectedAsset, selectedIndex, visibleAssets]);
 
+  const goToPreviousAsset = () => {
+    if (!selectedAsset) {
+      return;
+    }
+
+    setSelectedAssetId(visibleAssets[Math.max(selectedIndex - 1, 0)]?.id ?? selectedAsset.id);
+  };
+
+  const goToNextAsset = () => {
+    if (!selectedAsset) {
+      return;
+    }
+
+    setSelectedAssetId(
+      visibleAssets[Math.min(selectedIndex + 1, visibleAssets.length - 1)]?.id ?? selectedAsset.id,
+    );
+  };
+
+  const openViewerFullscreen = async () => {
+    const target = viewerRef.current;
+
+    if (!target || !document.fullscreenEnabled) {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await target.requestFullscreen();
+    } catch {
+      // Ignore fullscreen API failures and leave the standard overlay in place.
+    }
+  };
+
   const setAsModelCover = async () => {
     if (!selectedAsset || coverSavingAssetId) {
       return;
@@ -110,6 +159,10 @@ export function ModelGallery({ model }: ModelGalleryProps) {
     } finally {
       setCoverSavingAssetId(null);
     }
+  };
+
+  const toggleVideoPreview = (assetId: string) => {
+    setPreviewingAssetId((current) => (current === assetId ? null : assetId));
   };
 
   return (
@@ -178,12 +231,11 @@ export function ModelGallery({ model }: ModelGalleryProps) {
         >
           {visibleAssets.map((asset) => {
             const previewUrl = asset.assetType === "photo" ? asset.assetUrl : asset.thumbnailPath;
+            const isPreviewingVideo = asset.assetType === "video" && previewingAssetId === asset.id;
 
             return (
-              <button
+              <div
                 key={asset.id}
-                type="button"
-                onClick={() => setSelectedAssetId(asset.id)}
                 className="group overflow-hidden rounded-[24px] border border-white/10 bg-[#0b1016] text-left shadow-panel transition hover:border-accent/30 hover:bg-white/[0.03]"
               >
                 <div
@@ -192,7 +244,16 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                     thumbnailSize === "compact" ? "aspect-[5/6]" : "aspect-[4/5]",
                   )}
                 >
-                  {previewUrl ? (
+                  {isPreviewingVideo ? (
+                    <video
+                      src={asset.assetUrl}
+                      className="h-full w-full object-cover"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : previewUrl ? (
                     <Image
                       src={previewUrl}
                       alt={asset.fileName}
@@ -210,6 +271,37 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                     </div>
                   )}
 
+                  <div className="absolute right-3 top-3 flex items-center gap-2">
+                    {asset.assetType === "video" ? (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleVideoPreview(asset.id);
+                        }}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-black/40 text-white transition hover:bg-black/60"
+                        aria-label={isPreviewingVideo ? "Stop video preview" : "Preview video"}
+                      >
+                        {isPreviewingVideo ? (
+                          <PauseCircle className="h-5 w-5" />
+                        ) : (
+                          <PlayCircle className="h-5 w-5" />
+                        )}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setSelectedAssetId(asset.id);
+                      }}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-black/40 text-white transition hover:bg-black/60"
+                      aria-label="Open asset"
+                    >
+                      <Expand className="h-4 w-4" />
+                    </button>
+                  </div>
+
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent p-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className="rounded-full border border-white/15 bg-black/35 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
@@ -226,7 +318,7 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                     {asset.relativePath}
                   </p>
                 </div>
-              </button>
+              </div>
             );
           })}
         </section>
@@ -235,7 +327,32 @@ export function ModelGallery({ model }: ModelGalleryProps) {
       {selectedAsset ? (
         <div className="fixed inset-0 z-50 bg-black/80 p-4 backdrop-blur-sm">
           <div className="mx-auto flex h-full max-w-[1560px] flex-col gap-4 xl:flex-row">
-            <div className="relative flex min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#05070a] p-4 shadow-panel">
+            <div
+              ref={viewerRef}
+              className="relative flex min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#05070a] p-4 shadow-panel"
+              onTouchStart={(event) => {
+                setTouchStartX(event.changedTouches[0]?.clientX ?? null);
+              }}
+              onTouchEnd={(event) => {
+                if (touchStartX === null) {
+                  return;
+                }
+
+                const touchEndX = event.changedTouches[0]?.clientX ?? touchStartX;
+                const deltaX = touchEndX - touchStartX;
+                setTouchStartX(null);
+
+                if (Math.abs(deltaX) < 50) {
+                  return;
+                }
+
+                if (deltaX > 0) {
+                  goToPreviousAsset();
+                } else {
+                  goToNextAsset();
+                }
+              }}
+            >
               {selectedAsset.assetType === "photo" ? (
                 <img
                   src={selectedAsset.assetUrl}
@@ -259,16 +376,20 @@ export function ModelGallery({ model }: ModelGalleryProps) {
               >
                 <X className="h-5 w-5" />
               </button>
+              <button
+                type="button"
+                onClick={() => void openViewerFullscreen()}
+                className="absolute right-16 top-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-slate-200 transition hover:bg-black/55 hover:text-white"
+                aria-label="Toggle fullscreen viewer"
+              >
+                <Expand className="h-5 w-5" />
+              </button>
 
               {visibleAssets.length > 1 ? (
                 <>
                   <button
                     type="button"
-                    onClick={() =>
-                      setSelectedAssetId(
-                        visibleAssets[Math.max(selectedIndex - 1, 0)]?.id ?? selectedAsset.id,
-                      )
-                    }
+                    onClick={goToPreviousAsset}
                     className="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-slate-200 transition hover:bg-black/55 hover:text-white"
                     aria-label="Previous asset"
                   >
@@ -276,12 +397,7 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      setSelectedAssetId(
-                        visibleAssets[Math.min(selectedIndex + 1, visibleAssets.length - 1)]?.id ??
-                          selectedAsset.id,
-                      )
-                    }
+                    onClick={goToNextAsset}
                     className="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-slate-200 transition hover:bg-black/55 hover:text-white"
                     aria-label="Next asset"
                   >
