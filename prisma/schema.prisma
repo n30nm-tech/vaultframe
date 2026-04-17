@@ -87,6 +87,7 @@ model Model {
   name           String
   path           String       @unique
   enabled        Boolean      @default(true)
+  coverAssetId   String?
   importStatus   String       @default("IDLE")
   importQueuedAt DateTime?
   importStartedAt DateTime?
@@ -100,6 +101,7 @@ model Model {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   lastImportedAt DateTime?
+  coverAsset     ModelAsset?  @relation("ModelCoverAsset", fields: [coverAssetId], references: [id], onDelete: SetNull)
   assets         ModelAsset[]
 }
 
@@ -120,6 +122,7 @@ model ModelAsset {
   updatedAt       DateTime @updatedAt
   lastSeenAt      DateTime
   model           Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  coverForModels  Model[]  @relation("ModelCoverAsset")
 
   @@index([modelId])
   @@index([modelId, assetType])

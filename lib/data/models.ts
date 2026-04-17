@@ -45,6 +45,7 @@ export type ModelRecord = {
   photoCount: number;
   videoCount: number;
   folderCount: number;
+  coverAssetId: string | null;
   coverUrl: string | null;
   coverType: "photo" | "video" | null;
 };
@@ -120,6 +121,7 @@ export async function listModels() {
       createdAt: Date;
       updatedAt: Date;
       lastImportedAt: Date | null;
+      coverAssetId: string | null;
       assets: Array<{
         id: string;
         assetType: string;
@@ -167,7 +169,10 @@ export async function listModels() {
 
   return models.map((model) => {
     const counts = countsByModel.get(model.id) ?? { photoCount: 0, videoCount: 0 };
-    const previewAsset = model.assets[0] ?? null;
+      const previewAsset =
+        (model.coverAssetId
+          ? model.assets.find((asset) => asset.id === model.coverAssetId) ?? null
+          : null) ?? model.assets[0] ?? null;
 
     return {
       id: model.id,
@@ -187,6 +192,7 @@ export async function listModels() {
       createdAt: model.createdAt,
       updatedAt: model.updatedAt,
       lastImportedAt: model.lastImportedAt,
+      coverAssetId: model.coverAssetId,
       assetCount: counts.photoCount + counts.videoCount,
       photoCount: counts.photoCount,
       videoCount: counts.videoCount,
@@ -232,6 +238,7 @@ export async function getModelById(id: string) {
         createdAt: Date;
         updatedAt: Date;
         lastImportedAt: Date | null;
+        coverAssetId: string | null;
         assets: Array<{
           id: string;
           modelId: string;
@@ -259,7 +266,13 @@ export async function getModelById(id: string) {
   const photoCount = model.assets.filter((asset) => asset.assetType === "PHOTO").length;
   const videoCount = model.assets.filter((asset) => asset.assetType === "VIDEO").length;
   const folderCount = new Set(model.assets.map((asset) => asset.folderPath)).size;
-  const previewAsset = model.assets.find((asset) => asset.assetType === "PHOTO") ?? model.assets[0] ?? null;
+  const previewAsset =
+    (model.coverAssetId
+      ? model.assets.find((asset) => asset.id === model.coverAssetId) ?? null
+      : null) ??
+    model.assets.find((asset) => asset.assetType === "PHOTO") ??
+    model.assets[0] ??
+    null;
 
   return {
     id: model.id,
@@ -279,6 +292,7 @@ export async function getModelById(id: string) {
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
     lastImportedAt: model.lastImportedAt,
+    coverAssetId: model.coverAssetId,
     assetCount: model.assets.length,
     photoCount,
     videoCount,
@@ -332,6 +346,32 @@ export async function getModelAssetById(id: string) {
   }
 
   return asset;
+}
+
+export async function setModelCoverAsset(modelId: string, assetId: string) {
+  const asset = await prisma.modelAsset.findFirst({
+    where: {
+      id: assetId,
+      modelId,
+      missing: false,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!asset) {
+    throw new Error("That asset cannot be used as this model cover.");
+  }
+
+  await prisma.model.update({
+    where: { id: modelId },
+    data: {
+      coverAssetId: asset.id,
+    } as never,
+  } as never);
+
+  return asset.id;
 }
 
 export async function createModel(input: {

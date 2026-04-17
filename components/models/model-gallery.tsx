@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ImageIcon, PlayCircle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageIcon, LoaderCircle, PlayCircle, X } from "lucide-react";
 import clsx from "clsx";
 import { PlaceholderCard } from "@/components/ui/placeholder-card";
 import type { ModelGalleryRecord } from "@/lib/data/models";
+import { useRouter } from "next/navigation";
 
 type ModelGalleryProps = {
   model: ModelGalleryRecord;
@@ -15,9 +16,13 @@ type FilterMode = "all" | "photo" | "video";
 type ThumbnailSizeMode = "standard" | "compact";
 
 export function ModelGallery({ model }: ModelGalleryProps) {
+  const router = useRouter();
   const [filter, setFilter] = useState<FilterMode>("all");
   const [thumbnailSize, setThumbnailSize] = useState<ThumbnailSizeMode>("standard");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [coverSavingAssetId, setCoverSavingAssetId] = useState<string | null>(null);
+  const [coverMessage, setCoverMessage] = useState<string | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
 
   const visibleAssets = useMemo(() => {
     return model.assets.filter((asset) => {
@@ -69,6 +74,43 @@ export function ModelGallery({ model }: ModelGalleryProps) {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [selectedAsset, selectedIndex, visibleAssets]);
+
+  const setAsModelCover = async () => {
+    if (!selectedAsset || coverSavingAssetId) {
+      return;
+    }
+
+    setCoverSavingAssetId(selectedAsset.id);
+    setCoverMessage(null);
+    setCoverError(null);
+
+    try {
+      const formData = new FormData();
+      formData.set("assetId", selectedAsset.id);
+      formData.set("returnTo", `/models/${model.id}`);
+
+      const response = await fetch(`/api/models/${model.id}/cover?format=json`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      const payload = (await response.json()) as { ok?: boolean; error?: string };
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Unable to update model cover.");
+      }
+
+      setCoverMessage("Model cover updated.");
+      router.refresh();
+    } catch (error) {
+      setCoverError(error instanceof Error ? error.message : "Unable to update model cover.");
+    } finally {
+      setCoverSavingAssetId(null);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -254,6 +296,29 @@ export function ModelGallery({ model }: ModelGalleryProps) {
               <h3 className="mt-3 text-xl font-semibold tracking-tight text-white">
                 {selectedAsset.fileName}
               </h3>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => void setAsModelCover()}
+                  disabled={Boolean(coverSavingAssetId)}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {coverSavingAssetId === selectedAsset.id ? (
+                    <LoaderCircle className="h-4 w-4" />
+                  ) : null}
+                  {model.coverAssetId === selectedAsset.id ? "Current model cover" : "Use as model cover"}
+                </button>
+              </div>
+              {coverMessage ? (
+                <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                  {coverMessage}
+                </div>
+              ) : null}
+              {coverError ? (
+                <div className="mt-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                  {coverError}
+                </div>
+              ) : null}
               <div className="mt-5 space-y-3 text-sm text-slate-300">
                 <InfoRow label="Type" value={selectedAsset.assetType} />
                 <InfoRow label="Folder" value={selectedAsset.folderPath} />
