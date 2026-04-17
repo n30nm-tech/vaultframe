@@ -2,11 +2,13 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ModelsManager } from "@/components/models/models-manager";
 import { listModels } from "@/lib/data/models";
 import { requirePageAuth } from "@/lib/server/auth";
+import { ensureModelImportRunnerStarted } from "@/lib/server/model-import";
 
 export const dynamic = "force-dynamic";
 
 export default async function ModelsPage() {
   await requirePageAuth("/models");
+  ensureModelImportRunnerStarted();
   const models = await listModels();
 
   return (

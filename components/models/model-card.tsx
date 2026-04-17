@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Images, Trash2, Video } from "lucide-react";
+import { Images, LoaderCircle, Trash2, Video } from "lucide-react";
 import type { ModelRecord } from "@/lib/data/models";
 
 type ModelCardProps = {
@@ -63,6 +63,50 @@ export function ModelCard({ model, onDelete, deletePending = false }: ModelCardP
             <p className="mt-2 text-lg font-semibold text-white">{model.videoCount}</p>
           </div>
         </div>
+
+        {model.importStatus === "RUNNING" || model.importStatus === "QUEUED" ? (
+          <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-4 text-sm text-sky-100">
+            <div className="flex items-center gap-2 font-medium">
+              <LoaderCircle className="h-4 w-4" />
+              <span>{model.importStatus === "RUNNING" ? "Importing now" : "Queued to import"}</span>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-xs uppercase tracking-[0.16em] text-sky-100/80">
+              <div>
+                <p>Total</p>
+                <p className="mt-1 text-base font-semibold text-white">{model.importTotalFiles}</p>
+              </div>
+              <div>
+                <p>Checked</p>
+                <p className="mt-1 text-base font-semibold text-white">{model.importFilesScanned}</p>
+              </div>
+              <div>
+                <p>Left</p>
+                <p className="mt-1 text-base font-semibold text-white">
+                  {Math.max(model.importTotalFiles - model.importFilesScanned, 0)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs uppercase tracking-[0.16em] text-sky-100/80">
+              <div>
+                <p>Photos</p>
+                <p className="mt-1 text-base font-semibold text-white">{model.importPhotosFound}</p>
+              </div>
+              <div>
+                <p>Videos</p>
+                <p className="mt-1 text-base font-semibold text-white">{model.importVideosFound}</p>
+              </div>
+            </div>
+            {model.importCurrentPath ? (
+              <p className="mt-3 break-all text-xs text-sky-50/90">{model.importCurrentPath}</p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {model.importStatus === "FAILED" && model.importError ? (
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">
+            {model.importError}
+          </div>
+        ) : null}
 
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Folder</p>

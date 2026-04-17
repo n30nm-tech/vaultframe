@@ -28,6 +28,16 @@ export type ModelRecord = {
   name: string;
   path: string;
   enabled: boolean;
+  importStatus: string;
+  importQueuedAt: Date | null;
+  importStartedAt: Date | null;
+  importFinishedAt: Date | null;
+  importCurrentPath: string | null;
+  importTotalFiles: number;
+  importFilesScanned: number;
+  importPhotosFound: number;
+  importVideosFound: number;
+  importError: string | null;
   createdAt: Date;
   updatedAt: Date;
   lastImportedAt: Date | null;
@@ -63,7 +73,7 @@ export type ModelGalleryRecord = ModelRecord & {
 };
 
 export async function listModels() {
-  const [models, groupedCounts, distinctFolders] = await Promise.all([
+  const [models, groupedCounts, distinctFolders] = (await Promise.all([
     prisma.model.findMany({
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       include: {
@@ -77,20 +87,54 @@ export async function listModels() {
           take: 1,
         },
       },
-    }),
+    } as never),
     prisma.modelAsset.groupBy({
       by: ["modelId", "assetType"],
       _count: {
         _all: true,
       },
-    }),
+    } as never),
     prisma.modelAsset.findMany({
       select: {
         modelId: true,
         folderPath: true,
       },
       distinct: ["modelId", "folderPath"],
-    }),
+    } as never),
+  ]) as unknown as [
+    Array<{
+      id: string;
+      name: string;
+      path: string;
+      enabled: boolean;
+      importStatus: string;
+      importQueuedAt: Date | null;
+      importStartedAt: Date | null;
+      importFinishedAt: Date | null;
+      importCurrentPath: string | null;
+      importTotalFiles: number;
+      importFilesScanned: number;
+      importPhotosFound: number;
+      importVideosFound: number;
+      importError: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      lastImportedAt: Date | null;
+      assets: Array<{
+        id: string;
+        assetType: string;
+        thumbnailPath: string | null;
+      }>;
+    }>,
+    Array<{
+      modelId: string;
+      assetType: string;
+      _count: { _all: number };
+    }>,
+    Array<{
+      modelId: string;
+      folderPath: string;
+    }>
   ]);
 
   const countsByModel = new Map<
@@ -130,6 +174,16 @@ export async function listModels() {
       name: model.name,
       path: model.path,
       enabled: model.enabled,
+      importStatus: model.importStatus,
+      importQueuedAt: model.importQueuedAt,
+      importStartedAt: model.importStartedAt,
+      importFinishedAt: model.importFinishedAt,
+      importCurrentPath: model.importCurrentPath,
+      importTotalFiles: model.importTotalFiles,
+      importFilesScanned: model.importFilesScanned,
+      importPhotosFound: model.importPhotosFound,
+      importVideosFound: model.importVideosFound,
+      importError: model.importError,
       createdAt: model.createdAt,
       updatedAt: model.updatedAt,
       lastImportedAt: model.lastImportedAt,
@@ -159,7 +213,44 @@ export async function getModelById(id: string) {
         orderBy: [{ updatedAt: "desc" }, { fileName: "asc" }],
       },
     },
-  });
+  } as never) as
+    | ({
+        id: string;
+        name: string;
+        path: string;
+        enabled: boolean;
+        importStatus: string;
+        importQueuedAt: Date | null;
+        importStartedAt: Date | null;
+        importFinishedAt: Date | null;
+        importCurrentPath: string | null;
+        importTotalFiles: number;
+        importFilesScanned: number;
+        importPhotosFound: number;
+        importVideosFound: number;
+        importError: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        lastImportedAt: Date | null;
+        assets: Array<{
+          id: string;
+          modelId: string;
+          fullPath: string;
+          relativePath: string;
+          folderPath: string;
+          fileName: string;
+          assetType: string;
+          extension: string;
+          thumbnailPath: string | null;
+          sizeBytes: bigint | null;
+          durationSeconds: number | null;
+          missing: boolean;
+          createdAt: Date;
+          updatedAt: Date;
+          lastSeenAt: Date;
+        }>;
+      })
+    | null;
 
   if (!model) {
     return null;
@@ -175,6 +266,16 @@ export async function getModelById(id: string) {
     name: model.name,
     path: model.path,
     enabled: model.enabled,
+    importStatus: model.importStatus,
+    importQueuedAt: model.importQueuedAt,
+    importStartedAt: model.importStartedAt,
+    importFinishedAt: model.importFinishedAt,
+    importCurrentPath: model.importCurrentPath,
+    importTotalFiles: model.importTotalFiles,
+    importFilesScanned: model.importFilesScanned,
+    importPhotosFound: model.importPhotosFound,
+    importVideosFound: model.importVideosFound,
+    importError: model.importError,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
     lastImportedAt: model.lastImportedAt,
@@ -252,35 +353,24 @@ export async function createModel(input: {
     throw new Error("That folder is already saved as a model.");
   }
 
-  const now = new Date();
-  const discoveredAssets = await collectModelAssets(validatedPath, now);
   const model = await prisma.model.create({
     data: {
       name: input.name.trim() || path.basename(validatedPath),
       path: validatedPath,
       enabled: input.enabled,
-      lastImportedAt: now,
+      importStatus: "QUEUED",
+      importQueuedAt: new Date(),
+      importStartedAt: null,
+      importFinishedAt: null,
+      importCurrentPath: null,
+      importTotalFiles: 0,
+      importFilesScanned: 0,
+      importPhotosFound: 0,
+      importVideosFound: 0,
+      importError: null,
+      lastImportedAt: null,
     },
-  });
-
-  if (discoveredAssets.length > 0) {
-    await prisma.modelAsset.createMany({
-      data: discoveredAssets.map((asset) => ({
-        modelId: model.id,
-        fullPath: asset.fullPath,
-        relativePath: asset.relativePath,
-        folderPath: asset.folderPath,
-        fileName: asset.fileName,
-        assetType: asset.assetType,
-        extension: asset.extension,
-        thumbnailPath: asset.thumbnailPath,
-        sizeBytes: asset.sizeBytes,
-        durationSeconds: asset.durationSeconds,
-        missing: false,
-        lastSeenAt: now,
-      })),
-    });
-  }
+  } as never);
 
   return model;
 }
@@ -293,7 +383,7 @@ export async function deleteModel(id: string) {
   });
 }
 
-async function collectModelAssets(rootPath: string, now: Date) {
+export async function collectModelAssets(rootPath: string, now: Date) {
   const assets: Array<{
     fullPath: string;
     relativePath: string;
@@ -364,6 +454,92 @@ async function collectModelAssets(rootPath: string, now: Date) {
   }
 
   return assets;
+}
+
+export async function updateModelImportState(
+  modelId: string,
+  data: Partial<{
+    importStatus: string;
+    importQueuedAt: Date | null;
+    importStartedAt: Date | null;
+    importFinishedAt: Date | null;
+    importCurrentPath: string | null;
+    importTotalFiles: number;
+    importFilesScanned: number;
+    importPhotosFound: number;
+    importVideosFound: number;
+    importError: string | null;
+    lastImportedAt: Date | null;
+  }>,
+) {
+  await prisma.model.update({
+    where: { id: modelId },
+    data: data as never,
+  } as never);
+}
+
+export async function markAllModelAssetsMissing(modelId: string) {
+  await prisma.modelAsset.updateMany({
+    where: { modelId },
+    data: { missing: true } as never,
+  } as never);
+}
+
+export async function upsertModelAsset(
+  modelId: string,
+  asset: Awaited<ReturnType<typeof collectModelAssets>>[number],
+) {
+  await prisma.modelAsset.upsert({
+    where: {
+      fullPath: asset.fullPath,
+    },
+    create: {
+      modelId,
+      fullPath: asset.fullPath,
+      relativePath: asset.relativePath,
+      folderPath: asset.folderPath,
+      fileName: asset.fileName,
+      assetType: asset.assetType,
+      extension: asset.extension,
+      thumbnailPath: asset.thumbnailPath,
+      sizeBytes: asset.sizeBytes,
+      durationSeconds: asset.durationSeconds,
+      missing: false,
+      lastSeenAt: asset.lastSeenAt,
+    },
+    update: {
+      modelId,
+      relativePath: asset.relativePath,
+      folderPath: asset.folderPath,
+      fileName: asset.fileName,
+      assetType: asset.assetType,
+      extension: asset.extension,
+      thumbnailPath: asset.thumbnailPath,
+      sizeBytes: asset.sizeBytes,
+      durationSeconds: asset.durationSeconds,
+      missing: false,
+      lastSeenAt: asset.lastSeenAt,
+    } as never,
+  } as never);
+}
+
+export async function clearMissingModelAssets(modelId: string, seenPaths: string[]) {
+  if (seenPaths.length === 0) {
+    await markAllModelAssetsMissing(modelId);
+    return;
+  }
+
+  await prisma.modelAsset.updateMany({
+    where: {
+      modelId,
+      fullPath: {
+        notIn: seenPaths,
+      },
+    },
+    data: {
+      missing: true,
+    },
+  } as never);
 }
 
 function getModelAssetType(extension: string) {

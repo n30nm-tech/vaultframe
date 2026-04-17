@@ -87,6 +87,16 @@ model Model {
   name           String
   path           String       @unique
   enabled        Boolean      @default(true)
+  importStatus   String       @default("IDLE")
+  importQueuedAt DateTime?
+  importStartedAt DateTime?
+  importFinishedAt DateTime?
+  importCurrentPath String?
+  importTotalFiles Int        @default(0)
+  importFilesScanned Int      @default(0)
+  importPhotosFound Int       @default(0)
+  importVideosFound Int       @default(0)
+  importError    String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   lastImportedAt DateTime?

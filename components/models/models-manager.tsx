@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FolderPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ModelCard } from "@/components/models/model-card";
@@ -18,6 +18,25 @@ export function ModelsManager({ models }: ModelsManagerProps) {
   const [deletePending, setDeletePending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const hasActiveImport = models.some(
+    (model) => model.importStatus === "RUNNING" || model.importStatus === "QUEUED",
+  );
+  const runningModel = models.find((model) => model.importStatus === "RUNNING");
+  const queuedCount = models.filter((model) => model.importStatus === "QUEUED").length;
+
+  useEffect(() => {
+    if (!hasActiveImport) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      router.refresh();
+    }, 2500);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [hasActiveImport, router]);
 
   const handleDelete = async (id: string) => {
     if (deletePending) {
@@ -89,6 +108,24 @@ export function ModelsManager({ models }: ModelsManagerProps) {
       {error ? (
         <section className="mt-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
           {error}
+        </section>
+      ) : null}
+
+      {hasActiveImport ? (
+        <section className="mt-4 rounded-[24px] border border-sky-400/20 bg-sky-400/10 px-5 py-4 text-sm text-sky-50">
+          <div className="space-y-1">
+            <p className="font-medium">
+              {runningModel
+                ? `Importing ${runningModel.name} right now`
+                : "Model import queue is active"}
+            </p>
+            <p className="text-sky-100/90">
+              {runningModel
+                ? `${runningModel.importFilesScanned} of ${runningModel.importTotalFiles} files checked. ${runningModel.importPhotosFound} photos and ${runningModel.importVideosFound} videos imported so far.`
+                : "The next model import will begin automatically."}
+              {queuedCount > 0 ? ` ${queuedCount} more model ${queuedCount === 1 ? "is" : "are"} queued behind it.` : ""}
+            </p>
+          </div>
         </section>
       ) : null}
 

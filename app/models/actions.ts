@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createModel } from "@/lib/data/models";
 import { assertAuthenticated } from "@/lib/server/auth";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
+import { enqueueModelImport, ensureModelImportRunnerStarted } from "@/lib/server/model-import";
 
 export type ModelActionState = {
   success: boolean;
@@ -43,7 +44,9 @@ export async function createModelAction(
 
   try {
     await validateLibraryPath(path);
-    await createModel({ name, path, enabled });
+    const model = await createModel({ name, path, enabled });
+    ensureModelImportRunnerStarted();
+    await enqueueModelImport(model.id);
     revalidatePath("/models");
     return { success: true };
   } catch (error) {

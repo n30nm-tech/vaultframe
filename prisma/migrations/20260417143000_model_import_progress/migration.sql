@@ -1,0 +1,12 @@
+-- AlterTable
+ALTER TABLE "Model"
+ADD COLUMN "importStatus" TEXT NOT NULL DEFAULT 'IDLE',
+ADD COLUMN "importQueuedAt" TIMESTAMP(3),
+ADD COLUMN "importStartedAt" TIMESTAMP(3),
+ADD COLUMN "importFinishedAt" TIMESTAMP(3),
+ADD COLUMN "importCurrentPath" TEXT,
+ADD COLUMN "importTotalFiles" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "importFilesScanned" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "importPhotosFound" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "importVideosFound" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "importError" TEXT;
