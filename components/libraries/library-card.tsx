@@ -10,9 +10,16 @@ import type { LibraryRecord } from "@/lib/data/libraries";
 type LibraryCardProps = {
   library: LibraryRecord;
   onEdit: (library: LibraryRecord) => void;
+  selected?: boolean;
+  onToggleSelect?: (libraryId: string) => void;
 };
 
-export function LibraryCard({ library, onEdit }: LibraryCardProps) {
+export function LibraryCard({
+  library,
+  onEdit,
+  selected = false,
+  onToggleSelect,
+}: LibraryCardProps) {
   const scanDisabled =
     !library.storageAvailable ||
     !library.enabled ||
@@ -34,6 +41,21 @@ export function LibraryCard({ library, onEdit }: LibraryCardProps) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
+            {onToggleSelect ? (
+              <button
+                type="button"
+                onClick={() => onToggleSelect(library.id)}
+                className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
+                  selected
+                    ? "border-accent bg-accent text-slate-950"
+                    : "border-white/15 bg-white/[0.03] text-slate-400 hover:text-white"
+                }`}
+                aria-pressed={selected}
+                aria-label={selected ? "Deselect library" : "Select library"}
+              >
+                {selected ? "✓" : ""}
+              </button>
+            ) : null}
             <h3 className="text-lg font-semibold tracking-tight text-white sm:text-xl">{library.name}</h3>
             <span
               className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${

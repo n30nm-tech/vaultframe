@@ -181,6 +181,26 @@ export async function deleteLibrary(id: string) {
   }
 }
 
+export async function deleteLibraries(ids: string[]) {
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+
+  if (uniqueIds.length === 0) {
+    return { count: 0 };
+  }
+
+  try {
+    return await prisma.library.deleteMany({
+      where: {
+        id: {
+          in: uniqueIds,
+        },
+      },
+    });
+  } catch (error) {
+    throw mapLibraryError(error);
+  }
+}
+
 export async function toggleLibraryEnabled(id: string, enabled: boolean) {
   try {
     return await prisma.library.update({

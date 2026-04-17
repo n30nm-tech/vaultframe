@@ -5,6 +5,7 @@ import {
   createLibrary,
   createLibrariesFromSubfolders,
   deleteLibrary,
+  deleteLibraries,
   toggleLibraryEnabled,
   updateLibrary,
 } from "@/lib/data/libraries";
@@ -136,6 +137,21 @@ export async function deleteLibraryAction(formData: FormData) {
   }
 
   await deleteLibrary(id);
+  revalidatePath("/libraries");
+}
+
+export async function deleteLibrariesAction(formData: FormData) {
+  await assertAuthenticated();
+  const ids = formData
+    .getAll("ids")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  if (ids.length === 0) {
+    return;
+  }
+
+  await deleteLibraries(ids);
   revalidatePath("/libraries");
 }
 

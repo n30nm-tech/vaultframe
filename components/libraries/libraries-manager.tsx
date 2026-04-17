@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FolderPlus, LoaderCircle, Sparkles } from "lucide-react";
+import { FolderPlus, LoaderCircle, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { deleteLibrariesAction } from "@/app/libraries/actions";
 import { LibraryCard } from "@/components/libraries/library-card";
 import { LibraryFormSheet } from "@/components/libraries/library-form-sheet";
 import type { LibraryRecord } from "@/lib/data/libraries";
@@ -16,6 +17,7 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedLibrary, setSelectedLibrary] = useState<LibraryRecord | undefined>(undefined);
   const [sheetKey, setSheetKey] = useState(0);
+  const [selectedLibraryIds, setSelectedLibraryIds] = useState<string[]>([]);
   const pendingScrollRestoreRef = useRef<number | null>(null);
   const hasActiveScan = libraries.some(
     (library) => library.scanStatus === "RUNNING" || library.scanStatus === "QUEUED",
@@ -60,6 +62,12 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
     });
   }, [libraries]);
 
+  useEffect(() => {
+    setSelectedLibraryIds((currentIds) =>
+      currentIds.filter((id) => libraries.some((library) => library.id === id)),
+    );
+  }, [libraries]);
+
   const openCreate = () => {
     setSelectedLibrary(undefined);
     setSheetKey((current) => current + 1);
@@ -75,6 +83,21 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
   const closeSheet = () => {
     setSelectedLibrary(undefined);
     setSheetOpen(false);
+  };
+
+  const allVisibleSelected =
+    libraries.length > 0 && selectedLibraryIds.length === libraries.length;
+
+  const toggleLibrarySelected = (libraryId: string) => {
+    setSelectedLibraryIds((currentIds) =>
+      currentIds.includes(libraryId)
+        ? currentIds.filter((id) => id !== libraryId)
+        : [...currentIds, libraryId],
+    );
+  };
+
+  const toggleAllVisible = () => {
+    setSelectedLibraryIds(allVisibleSelected ? [] : libraries.map((library) => library.id));
   };
 
   return (
@@ -99,6 +122,30 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
           Add Library
         </button>
       </section>
+
+      {libraries.length > 0 ? (
+        <section className="mt-6 flex flex-col gap-3 rounded-[24px] border border-white/10 bg-surface/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleAllVisible}
+              className="rounded-2xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.04] hover:text-white"
+            >
+              {allVisibleSelected ? "Clear selection" : "Select all visible"}
+            </button>
+            <p className="text-sm text-slate-400">
+              {selectedLibraryIds.length} selected
+            </p>
+          </div>
+
+          <form action={deleteLibrariesAction}>
+            {selectedLibraryIds.map((id) => (
+              <input key={id} type="hidden" name="ids" value={id} />
+            ))}
+            <BulkDeleteButton disabled={selectedLibraryIds.length === 0} />
+          </form>
+        </section>
+      ) : null}
 
       <section className="mt-6 grid gap-3 md:grid-cols-3">
         <StatusCard
@@ -168,7 +215,13 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
       ) : (
         <section className="mt-6 grid gap-4">
           {libraries.map((library) => (
-            <LibraryCard key={library.id} library={library} onEdit={openEdit} />
+            <LibraryCard
+              key={library.id}
+              library={library}
+              onEdit={openEdit}
+              selected={selectedLibraryIds.includes(library.id)}
+              onToggleSelect={toggleLibrarySelected}
+            />
           ))}
         </section>
       )}
@@ -180,6 +233,19 @@ export function LibrariesManager({ libraries }: LibrariesManagerProps) {
         onClose={closeSheet}
       />
     </>
+  );
+}
+
+function BulkDeleteButton({ disabled }: { disabled: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={disabled}
+      className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-sm font-medium text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <Trash2 className="h-4 w-4" />
+      Delete selected
+    </button>
   );
 }
 
