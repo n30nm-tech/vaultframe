@@ -73,6 +73,25 @@ export type ModelGalleryRecord = ModelRecord & {
   assets: ModelAssetRecord[];
 };
 
+export async function findModelByPath(pathValue: string) {
+  const validatedPath = await validateLibraryPath(pathValue);
+
+  return prisma.model.findUnique({
+    where: {
+      path: validatedPath,
+    },
+    select: {
+      id: true,
+      path: true,
+      name: true,
+    },
+  } as never) as Promise<{
+    id: string;
+    path: string;
+    name: string;
+  } | null>;
+}
+
 export async function listModels() {
   const [models, groupedCounts, distinctFolders] = (await Promise.all([
     prisma.model.findMany({
@@ -374,20 +393,78 @@ export async function setModelCoverAsset(modelId: string, assetId: string) {
   return asset.id;
 }
 
+export async function mergeModels(sourceModelId: string, targetModelId: string) {
+  if (sourceModelId === targetModelId) {
+    throw new Error("Choose a different model to merge into.");
+  }
+
+  const [sourceModel, targetModel] = await Promise.all([
+    prisma.model.findUnique({
+      where: { id: sourceModelId },
+      select: {
+        id: true,
+        name: true,
+        coverAssetId: true,
+      },
+    } as never),
+    prisma.model.findUnique({
+      where: { id: targetModelId },
+      select: {
+        id: true,
+        name: true,
+        coverAssetId: true,
+      },
+    } as never),
+  ]) as [
+    { id: string; name: string; coverAssetId: string | null } | null,
+    { id: string; name: string; coverAssetId: string | null } | null,
+  ];
+
+  if (!sourceModel || !targetModel) {
+    throw new Error("One of the selected models no longer exists.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.modelAsset.updateMany({
+      where: {
+        modelId: sourceModel.id,
+      },
+      data: {
+        modelId: targetModel.id,
+      } as never,
+    } as never);
+
+    if (!targetModel.coverAssetId && sourceModel.coverAssetId) {
+      await tx.model.update({
+        where: {
+          id: targetModel.id,
+        },
+        data: {
+          coverAssetId: sourceModel.coverAssetId,
+        } as never,
+      } as never);
+    }
+
+    await tx.model.delete({
+      where: {
+        id: sourceModel.id,
+      },
+    } as never);
+  });
+
+  return {
+    sourceName: sourceModel.name,
+    targetName: targetModel.name,
+  };
+}
+
 export async function createModel(input: {
   name: string;
   path: string;
   enabled: boolean;
 }) {
   const validatedPath = await validateLibraryPath(input.path);
-  const existing = await prisma.model.findUnique({
-    where: {
-      path: validatedPath,
-    },
-    select: {
-      id: true,
-    },
-  });
+  const existing = await findModelByPath(validatedPath);
 
   if (existing) {
     throw new Error("That folder is already saved as a model.");

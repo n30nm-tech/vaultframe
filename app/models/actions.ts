@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createModel, createModelsFromSubfolders } from "@/lib/data/models";
+import { createModel, createModelsFromSubfolders, findModelByPath } from "@/lib/data/models";
 import { assertAuthenticated } from "@/lib/server/auth";
 import { FolderBrowserError, validateLibraryPath } from "@/lib/server/folder-browser";
 import { enqueueModelImport, ensureModelImportRunnerStarted } from "@/lib/server/model-import";
@@ -52,6 +52,16 @@ export async function createModelAction(
 
   try {
     await validateLibraryPath(path);
+    const existingModel = await findModelByPath(path);
+
+    if (importMode === "single" && existingModel) {
+      return {
+        success: false,
+        error: "That folder is already saved as a model.",
+        duplicates: [existingModel.path],
+      };
+    }
+
     ensureModelImportRunnerStarted();
 
     if (importMode === "subfolders") {

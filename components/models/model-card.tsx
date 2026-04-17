@@ -2,16 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Images, LoaderCircle, Trash2, Video } from "lucide-react";
+import { ArrowRightLeft, Images, LoaderCircle, Trash2, Video } from "lucide-react";
 import type { ModelRecord } from "@/lib/data/models";
 
 type ModelCardProps = {
   model: ModelRecord;
   onDelete: (id: string) => void;
+  onMerge: (id: string) => void;
   deletePending?: boolean;
+  mergePending?: boolean;
 };
 
-export function ModelCard({ model, onDelete, deletePending = false }: ModelCardProps) {
+export function ModelCard({
+  model,
+  onDelete,
+  onMerge,
+  deletePending = false,
+  mergePending = false,
+}: ModelCardProps) {
   return (
     <article className="overflow-hidden rounded-[28px] border border-white/10 bg-surface/80 shadow-panel">
       <Link href={`/models/${model.id}`} className="block">
@@ -113,22 +121,33 @@ export function ModelCard({ model, onDelete, deletePending = false }: ModelCardP
           <p className="break-all text-sm text-slate-300">{model.path}</p>
         </div>
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href={`/models/${model.id}`}
             className="inline-flex items-center justify-center rounded-2xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.04] hover:text-white"
           >
             Open gallery
           </Link>
-          <button
-            type="button"
-            onClick={() => onDelete(model.id)}
-            disabled={deletePending}
-            className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-sm font-medium text-rose-100 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onMerge(model.id)}
+              disabled={mergePending}
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Merge
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(model.id)}
+              disabled={deletePending}
+              className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-sm font-medium text-rose-100 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </article>
