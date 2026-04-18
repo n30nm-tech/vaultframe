@@ -1,5 +1,17 @@
 # Changelog
 
+## v4.0.8 - Unreleased
+
+### Added
+
+- Mobile-friendly full-screen presentation for model photos and videos with inline metadata and cover selection controls
+
+### Changed
+
+- The model viewer now uses the full phone screen for opened assets instead of a desktop-style modal stack
+- Swipe left and right is now better aligned with the mobile full-screen experience
+- App branding now reflects the v4.0.8 release
+
 ## v4.0.7 - Unreleased
 
 ### Added
@@ -11,7 +23,6 @@
 
 - Running model imports now surface a clear stopping state instead of looking frozen
 - Cancelled model imports now leave a visible note on the model card so users know what happened
-- App branding now reflects the v4.0.7 release
 
 ## v4.0.6 - Unreleased
 

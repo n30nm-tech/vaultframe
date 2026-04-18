@@ -325,11 +325,11 @@ export function ModelGallery({ model }: ModelGalleryProps) {
       )}
 
       {selectedAsset ? (
-        <div className="fixed inset-0 z-50 bg-black/80 p-4 backdrop-blur-sm">
-          <div className="mx-auto flex h-full max-w-[1560px] flex-col gap-4 xl:flex-row">
+        <div className="fixed inset-0 z-50 bg-black/90 p-0 backdrop-blur-sm sm:bg-black/80 sm:p-4">
+          <div className="mx-auto flex h-full max-w-[1560px] flex-col gap-0 sm:gap-4 xl:flex-row">
             <div
               ref={viewerRef}
-              className="relative flex min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#05070a] p-4 shadow-panel"
+              className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#05070a] p-0 sm:min-h-[320px] sm:rounded-[28px] sm:border sm:border-white/10 sm:p-4 sm:shadow-panel"
               onTouchStart={(event) => {
                 setTouchStartX(event.changedTouches[0]?.clientX ?? null);
               }}
@@ -357,14 +357,15 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                 <img
                   src={selectedAsset.assetUrl}
                   alt={selectedAsset.fileName}
-                  className="max-h-full max-w-full rounded-2xl object-contain"
+                  className="h-full w-full object-contain sm:max-h-full sm:max-w-full sm:rounded-2xl"
                 />
               ) : (
                 <video
                   src={selectedAsset.assetUrl}
-                  className="max-h-full max-w-full rounded-2xl"
+                  className="h-full w-full object-contain sm:max-h-full sm:max-w-full sm:rounded-2xl"
                   controls
                   autoPlay
+                  playsInline
                 />
               )}
 
@@ -390,7 +391,7 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                   <button
                     type="button"
                     onClick={goToPreviousAsset}
-                    className="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-slate-200 transition hover:bg-black/55 hover:text-white"
+                    className="absolute left-3 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-slate-200 transition hover:bg-black/55 hover:text-white sm:left-4 sm:h-12 sm:w-12"
                     aria-label="Previous asset"
                   >
                     <ChevronLeft className="h-5 w-5" />
@@ -398,16 +399,47 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                   <button
                     type="button"
                     onClick={goToNextAsset}
-                    className="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-slate-200 transition hover:bg-black/55 hover:text-white"
+                    className="absolute right-3 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-slate-200 transition hover:bg-black/55 hover:text-white sm:right-4 sm:h-12 sm:w-12"
                     aria-label="Next asset"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
               ) : null}
+
+              <div className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-gradient-to-t from-black/95 via-black/85 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-10 xl:hidden">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">
+                      {selectedAsset.fileName}
+                    </p>
+                    <p className="truncate text-xs uppercase tracking-[0.16em] text-slate-400">
+                      {selectedAsset.folderPath}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void setAsModelCover()}
+                    disabled={Boolean(coverSavingAssetId)}
+                    className="shrink-0 rounded-2xl bg-accent px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {model.coverAssetId === selectedAsset.id ? "Current cover" : "Use as cover"}
+                  </button>
+                </div>
+                {coverMessage ? (
+                  <div className="mt-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                    {coverMessage}
+                  </div>
+                ) : null}
+                {coverError ? (
+                  <div className="mt-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                    {coverError}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
-            <aside className="w-full shrink-0 rounded-[28px] border border-white/10 bg-surface/90 p-5 shadow-panel xl:w-[380px]">
+            <aside className="hidden w-full shrink-0 rounded-[28px] border border-white/10 bg-surface/90 p-5 shadow-panel xl:block xl:w-[380px]">
               <p className="text-sm uppercase tracking-[0.22em] text-accent">Selected asset</p>
               <h3 className="mt-3 text-xl font-semibold tracking-tight text-white">
                 {selectedAsset.fileName}
