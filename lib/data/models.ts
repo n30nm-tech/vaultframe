@@ -584,7 +584,13 @@ export async function deleteModel(id: string) {
   });
 }
 
-export async function collectModelAssets(rootPath: string, now: Date) {
+export async function collectModelAssets(
+  rootPath: string,
+  now: Date,
+  options?: {
+    shouldAbort?: () => boolean | Promise<boolean>;
+  },
+) {
   const assets: Array<{
     fullPath: string;
     relativePath: string;
@@ -600,6 +606,10 @@ export async function collectModelAssets(rootPath: string, now: Date) {
   const queue = [rootPath];
 
   while (queue.length > 0) {
+    if (await options?.shouldAbort?.()) {
+      throw new Error("Model import cancelled by user.");
+    }
+
     const currentPath = queue.shift();
 
     if (!currentPath) {
@@ -609,6 +619,10 @@ export async function collectModelAssets(rootPath: string, now: Date) {
     const entries = await readdir(currentPath, { withFileTypes: true });
 
     for (const entry of entries) {
+      if (await options?.shouldAbort?.()) {
+        throw new Error("Model import cancelled by user.");
+      }
+
       if (entry.name.startsWith(".")) {
         continue;
       }

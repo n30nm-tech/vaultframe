@@ -1,5 +1,18 @@
 # Changelog
 
+## v4.0.7 - Unreleased
+
+### Added
+
+- Cancel controls for queued and actively running model imports directly from the Models UI
+- A dedicated API path for safely stopping model imports without touching the main library scanner
+
+### Changed
+
+- Running model imports now surface a clear stopping state instead of looking frozen
+- Cancelled model imports now leave a visible note on the model card so users know what happened
+- App branding now reflects the v4.0.7 release
+
 ## v4.0.6 - Unreleased
 
 ### Added
@@ -10,7 +23,6 @@
 ### Changed
 
 - Models page now calls out failed imports separately and explains that background imports continue even if you leave the page
-- App branding now reflects the v4.0.6 release
 
 ## v4.0.5 - Unreleased
 

@@ -16,6 +16,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
+  const [cancelPending, setCancelPending] = useState(false);
   const [mergePending, setMergePending] = useState(false);
   const [mergeSourceId, setMergeSourceId] = useState<string | null>(null);
   const [mergeTargetId, setMergeTargetId] = useState<string>("");
@@ -25,9 +26,14 @@ export function ModelsManager({ models }: ModelsManagerProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hasActiveImport = models.some(
-    (model) => model.importStatus === "RUNNING" || model.importStatus === "QUEUED",
+    (model) =>
+      model.importStatus === "RUNNING" ||
+      model.importStatus === "QUEUED" ||
+      model.importStatus === "CANCELLING",
   );
-  const runningModel = models.find((model) => model.importStatus === "RUNNING");
+  const runningModel = models.find(
+    (model) => model.importStatus === "RUNNING" || model.importStatus === "CANCELLING",
+  );
   const queuedCount = models.filter((model) => model.importStatus === "QUEUED").length;
   const failedCount = models.filter((model) => model.importStatus === "FAILED").length;
 
@@ -63,7 +69,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
         statusFilter === "all"
           ? true
           : statusFilter === "importing"
-            ? model.importStatus === "RUNNING" || model.importStatus === "QUEUED"
+            ? model.importStatus === "RUNNING" || model.importStatus === "QUEUED" || model.importStatus === "CANCELLING"
             : statusFilter === "failed"
               ? model.importStatus === "FAILED"
               : model.importStatus === "IDLE";
@@ -169,6 +175,49 @@ export function ModelsManager({ models }: ModelsManagerProps) {
     }
   };
 
+  const handleCancelImport = async (id: string) => {
+    if (cancelPending) {
+      return;
+    }
+
+    setCancelPending(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/models/import/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ modelId: id }),
+      });
+
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        name?: string;
+        status?: "cancelled-queued" | "cancelling";
+      };
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Unable to stop the import.");
+      }
+
+      setMessage(
+        payload.status === "cancelled-queued"
+          ? `${payload.name ?? "Model"} was removed from the import queue.`
+          : `Stopping ${payload.name ?? "model"} now.`,
+      );
+      router.refresh();
+    } catch (cancelError) {
+      setError(cancelError instanceof Error ? cancelError.message : "Unable to stop the import.");
+    } finally {
+      setCancelPending(false);
+    }
+  };
+
   const mergeSourceModel = mergeSourceId
     ? models.find((model) => model.id === mergeSourceId) ?? null
     : null;
@@ -218,12 +267,16 @@ export function ModelsManager({ models }: ModelsManagerProps) {
           <div className="space-y-1">
             <p className="font-medium">
               {runningModel
-                ? `Importing ${runningModel.name} right now`
+                ? runningModel.importStatus === "CANCELLING"
+                  ? `Stopping ${runningModel.name}`
+                  : `Importing ${runningModel.name} right now`
                 : "Model import queue is active"}
             </p>
             <p className="text-sky-100/90">
               {runningModel
-                ? `${runningModel.importFilesScanned} of ${runningModel.importTotalFiles} files checked. ${runningModel.importPhotosFound} photos and ${runningModel.importVideosFound} videos imported so far.`
+                ? runningModel.importStatus === "CANCELLING"
+                  ? "The current model import is being stopped safely."
+                  : `${runningModel.importFilesScanned} of ${runningModel.importTotalFiles} files checked. ${runningModel.importPhotosFound} photos and ${runningModel.importVideosFound} videos imported so far.`
                 : "The next model import will begin automatically."}
               {queuedCount > 0 ? ` ${queuedCount} more model ${queuedCount === 1 ? "is" : "are"} queued behind it.` : ""}
             </p>
@@ -359,8 +412,10 @@ export function ModelsManager({ models }: ModelsManagerProps) {
               model={model}
               onDelete={handleDelete}
               onMerge={openMerge}
+              onCancelImport={handleCancelImport}
               deletePending={deletePending}
               mergePending={mergePending}
+              cancelPending={cancelPending}
             />
           ))}
         </section>

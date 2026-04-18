@@ -2,23 +2,27 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRightLeft, Images, LoaderCircle, Trash2, Video } from "lucide-react";
+import { ArrowRightLeft, Images, LoaderCircle, Square, Trash2, Video } from "lucide-react";
 import type { ModelRecord } from "@/lib/data/models";
 
 type ModelCardProps = {
   model: ModelRecord;
   onDelete: (id: string) => void;
   onMerge: (id: string) => void;
+  onCancelImport: (id: string) => void;
   deletePending?: boolean;
   mergePending?: boolean;
+  cancelPending?: boolean;
 };
 
 export function ModelCard({
   model,
   onDelete,
   onMerge,
+  onCancelImport,
   deletePending = false,
   mergePending = false,
+  cancelPending = false,
 }: ModelCardProps) {
   return (
     <article className="overflow-hidden rounded-[28px] border border-white/10 bg-surface/80 shadow-panel">
@@ -72,11 +76,17 @@ export function ModelCard({
           </div>
         </div>
 
-        {model.importStatus === "RUNNING" || model.importStatus === "QUEUED" ? (
+        {model.importStatus === "RUNNING" || model.importStatus === "QUEUED" || model.importStatus === "CANCELLING" ? (
           <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-4 text-sm text-sky-100">
             <div className="flex items-center gap-2 font-medium">
               <LoaderCircle className="h-4 w-4" />
-              <span>{model.importStatus === "RUNNING" ? "Importing now" : "Queued to import"}</span>
+              <span>
+                {model.importStatus === "RUNNING"
+                  ? "Importing now"
+                  : model.importStatus === "CANCELLING"
+                    ? "Stopping import"
+                    : "Queued to import"}
+              </span>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-xs uppercase tracking-[0.16em] text-sky-100/80">
               <div>
@@ -107,11 +117,32 @@ export function ModelCard({
             {model.importCurrentPath ? (
               <p className="mt-3 break-all text-xs text-sky-50/90">{model.importCurrentPath}</p>
             ) : null}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => onCancelImport(model.id)}
+                disabled={cancelPending || model.importStatus === "CANCELLING"}
+                className="inline-flex items-center gap-2 rounded-2xl border border-sky-200/20 bg-black/20 px-4 py-2.5 text-sm font-medium text-sky-50 transition hover:bg-black/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Square className="h-4 w-4" />
+                {model.importStatus === "CANCELLING"
+                  ? "Stopping..."
+                  : model.importStatus === "QUEUED"
+                    ? "Remove from queue"
+                    : "Stop import"}
+              </button>
+            </div>
           </div>
         ) : null}
 
-        {model.importStatus === "FAILED" && model.importError ? (
-          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">
+        {model.importError && model.importStatus !== "RUNNING" && model.importStatus !== "QUEUED" && model.importStatus !== "CANCELLING" ? (
+          <div
+            className={`rounded-2xl px-4 py-4 text-sm ${
+              model.importStatus === "FAILED"
+                ? "border border-rose-500/20 bg-rose-500/10 text-rose-100"
+                : "border border-amber-400/20 bg-amber-400/10 text-amber-50"
+            }`}
+          >
             {model.importError}
           </div>
         ) : null}

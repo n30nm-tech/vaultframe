@@ -15,7 +15,15 @@ const globalForModelImportRunner = globalThis as unknown as {
   vaultFrameModelImportRunnerStarted?: boolean;
   vaultFrameModelImportRunnerTimer?: ReturnType<typeof setInterval>;
   vaultFrameActiveModelImportId?: string | null;
+  vaultFrameCancelledModelImportIds?: Set<string>;
 };
+
+class ModelImportCancelledError extends Error {
+  constructor(message = "Model import cancelled by user.") {
+    super(message);
+    this.name = "ModelImportCancelledError";
+  }
+}
 
 export async function enqueueModelImport(modelId: string) {
   const model = await prisma.model.findUnique({
@@ -58,6 +66,62 @@ export async function enqueueModelImport(modelId: string) {
   void runModelImportCycle();
 }
 
+export async function cancelModelImport(modelId: string) {
+  const model = await prisma.model.findUnique({
+    where: { id: modelId },
+    select: {
+      id: true,
+      name: true,
+      importStatus: true,
+    } as never,
+  } as never) as
+    | {
+        id: string;
+        name: string;
+        importStatus: string;
+      }
+    | null;
+
+  if (!model) {
+    throw new Error("Model not found.");
+  }
+
+  if (model.importStatus === "QUEUED") {
+    await updateModelImportState(modelId, {
+      importStatus: "IDLE",
+      importQueuedAt: null,
+      importStartedAt: null,
+      importFinishedAt: new Date(),
+      importCurrentPath: null,
+      importError: "Import cancelled before it started.",
+    });
+
+    return {
+      name: model.name,
+      status: "cancelled-queued" as const,
+    };
+  }
+
+  if (model.importStatus === "RUNNING" || model.importStatus === "CANCELLING") {
+    if (!globalForModelImportRunner.vaultFrameCancelledModelImportIds) {
+      globalForModelImportRunner.vaultFrameCancelledModelImportIds = new Set<string>();
+    }
+
+    globalForModelImportRunner.vaultFrameCancelledModelImportIds.add(modelId);
+    await updateModelImportState(modelId, {
+      importStatus: "CANCELLING",
+      importError: "Stopping import...",
+    });
+
+    return {
+      name: model.name,
+      status: "cancelling" as const,
+    };
+  }
+
+  throw new Error("That model is not currently queued or importing.");
+}
+
 export function ensureModelImportRunnerStarted() {
   if (globalForModelImportRunner.vaultFrameModelImportRunnerStarted) {
     return;
@@ -96,11 +160,14 @@ async function runModelImportCycle() {
     await importModelById(nextModel.id);
   } catch (error) {
     await updateModelImportState(nextModel.id, {
-      importStatus: "FAILED",
+      importStatus: error instanceof ModelImportCancelledError ? "IDLE" : "FAILED",
       importFinishedAt: new Date(),
+      importCurrentPath: null,
+      importQueuedAt: null,
       importError: error instanceof Error ? error.message : "Model import failed.",
     });
   } finally {
+    globalForModelImportRunner.vaultFrameCancelledModelImportIds?.delete(nextModel.id);
     globalForModelImportRunner.vaultFrameActiveModelImportId = null;
   }
 }
@@ -147,7 +214,9 @@ async function importModelById(modelId: string) {
   });
 
   const now = new Date();
-  const discoveredAssets = await collectModelAssets(validatedPath, now);
+  const discoveredAssets = await collectModelAssets(validatedPath, now, {
+    shouldAbort: () => isModelImportCancellationRequested(modelId),
+  });
   await updateModelImportState(modelId, {
     importTotalFiles: discoveredAssets.length,
   });
@@ -182,6 +251,7 @@ async function importModelById(modelId: string) {
   };
 
   for (const asset of discoveredAssets) {
+    throwIfModelImportCancelled(modelId);
     await upsertModelAsset(modelId, asset);
     seenPaths.push(asset.fullPath);
     filesScanned += 1;
@@ -210,4 +280,14 @@ async function importModelById(modelId: string) {
     importError: null,
     lastImportedAt: finishedAt,
   });
+}
+
+function isModelImportCancellationRequested(modelId: string) {
+  return globalForModelImportRunner.vaultFrameCancelledModelImportIds?.has(modelId) ?? false;
+}
+
+function throwIfModelImportCancelled(modelId: string) {
+  if (isModelImportCancellationRequested(modelId)) {
+    throw new ModelImportCancelledError();
+  }
 }
