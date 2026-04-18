@@ -29,6 +29,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
   );
   const runningModel = models.find((model) => model.importStatus === "RUNNING");
   const queuedCount = models.filter((model) => model.importStatus === "QUEUED").length;
+  const failedCount = models.filter((model) => model.importStatus === "FAILED").length;
 
   useEffect(() => {
     if (!hasActiveImport) {
@@ -226,7 +227,23 @@ export function ModelsManager({ models }: ModelsManagerProps) {
                 : "The next model import will begin automatically."}
               {queuedCount > 0 ? ` ${queuedCount} more model ${queuedCount === 1 ? "is" : "are"} queued behind it.` : ""}
             </p>
+            <p className="text-sky-100/75">
+              Imports keep running in the background, so you can stay on this page to watch
+              progress or come back later and pick up where it left off.
+            </p>
           </div>
+        </section>
+      ) : null}
+
+      {!hasActiveImport && failedCount > 0 ? (
+        <section className="mt-4 rounded-[24px] border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-100">
+          <p className="font-medium">
+            {failedCount} model import {failedCount === 1 ? "needs" : "need"} attention
+          </p>
+          <p className="mt-1 text-rose-100/85">
+            Use the filter set to <span className="font-semibold text-white">Failed</span> to see
+            the affected galleries and their error details.
+          </p>
         </section>
       ) : null}
 
@@ -267,7 +284,9 @@ export function ModelsManager({ models }: ModelsManagerProps) {
             </select>
           </label>
         </div>
-        <p className="text-sm text-slate-400">{visibleModels.length} visible model{visibleModels.length === 1 ? "" : "s"}</p>
+        <p className="text-sm text-slate-400">
+          {visibleModels.length} visible model{visibleModels.length === 1 ? "" : "s"}
+        </p>
       </section>
 
       {mergeSourceModel ? (
@@ -322,6 +341,14 @@ export function ModelsManager({ models }: ModelsManagerProps) {
             title="No model galleries yet"
             body="Create your first model by picking a folder. We’ll keep it separate from the main archive and turn it into a gallery-first space for photos and videos."
             meta="Models are separate from libraries and media scans"
+          />
+        </div>
+      ) : visibleModels.length === 0 ? (
+        <div className="mt-6">
+          <PlaceholderCard
+            title="No models match these controls"
+            body="Try clearing the search box, changing the status filter, or switching the sort. Your model galleries are still there; this view is just filtered down."
+            meta="Search, sort, and filter only change the current view"
           />
         </div>
       ) : (

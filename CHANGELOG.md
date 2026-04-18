@@ -1,5 +1,17 @@
 # Changelog
 
+## v4.0.6 - Unreleased
+
+### Added
+
+- Stronger in-sheet feedback for bulk model imports so users can see when the app is scanning subfolders before queueing imports
+- Clearer post-import guidance that model imports continue in the background after bulk creation
+
+### Changed
+
+- Models page now calls out failed imports separately and explains that background imports continue even if you leave the page
+- App branding now reflects the v4.0.6 release
+
 ## v4.0.5 - Unreleased
 
 ### Added
@@ -10,7 +22,6 @@
 
 ### Changed
 
-- App branding now reflects the v4.0.5 release
 - Media filter controls now include thumbnail density and thumbnail badge display options
 
 ## v3.2.0 - Unreleased

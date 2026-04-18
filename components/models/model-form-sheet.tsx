@@ -21,6 +21,7 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
   const [chooserOpen, setChooserOpen] = useState(false);
   const [manualEditEnabled, setManualEditEnabled] = useState(false);
   const [importMode, setImportMode] = useState<"single" | "subfolders">("single");
+  const shouldStayOpenAfterSuccess = importMode === "subfolders";
 
   useEffect(() => {
     if (!open) {
@@ -34,9 +35,20 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
   useEffect(() => {
     if (state.success) {
       setChooserOpen(false);
-      onClose();
+      if (!shouldStayOpenAfterSuccess) {
+        onClose();
+      }
     }
-  }, [onClose, state.success]);
+  }, [onClose, shouldStayOpenAfterSuccess, state.success]);
+
+  const submitLabel =
+    importMode === "subfolders"
+      ? pending
+        ? "Checking folders..."
+        : "Create models"
+      : pending
+        ? "Creating model..."
+        : "Create model";
 
   if (!open) {
     return null;
@@ -110,6 +122,21 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
                   </button>
                 </div>
               </div>
+
+              {importMode === "subfolders" ? (
+                <div className="rounded-[26px] border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-50">
+                  <p className="font-medium">Bulk model import</p>
+                  <p className="mt-2 text-amber-50/90">
+                    We’ll scan only the first-level subfolders inside the folder you choose. Each
+                    matching subfolder becomes its own model, and everything underneath that
+                    subfolder is imported into that model.
+                  </p>
+                  <p className="mt-2 text-amber-50/80">
+                    Large parent folders can take a little while here because we check each
+                    subfolder for supported media before creating the models.
+                  </p>
+                </div>
+              ) : null}
 
               <Field
                 label="Model name"
@@ -213,16 +240,37 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
                 ) : null}
               </div>
             ) : null}
+
+            {pending && importMode === "subfolders" ? (
+              <div className="mt-5 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+                <p className="font-medium">Scanning subfolders before import</p>
+                <p className="mt-2 text-sky-100/90">
+                  We’re checking each first-level subfolder for supported photos and videos, then
+                  we’ll queue any matching models to import in the background.
+                </p>
+              </div>
+            ) : null}
+
             {state.message ? (
               <div className="mt-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
                 {state.message}
+                {state.success && shouldStayOpenAfterSuccess ? (
+                  <p className="mt-3 text-emerald-100/90">
+                    The new models will now appear on the Models page and continue importing in the
+                    background. You can close this sheet whenever you’re ready.
+                  </p>
+                ) : null}
                 {state.duplicates && state.duplicates.length > 0 ? (
                   <div className="mt-3 space-y-1 text-xs text-emerald-100/90">
+                    <div>Skipped folders:</div>
                     {state.duplicates.slice(0, 8).map((duplicatePath) => (
                       <div key={duplicatePath} className="break-all">
                         {duplicatePath}
                       </div>
                     ))}
+                    {state.duplicates.length > 8 ? (
+                      <div>+{state.duplicates.length - 8} more skipped folders</div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -234,14 +282,14 @@ export function ModelFormSheet({ open, onClose }: ModelFormSheetProps) {
                 onClick={onClose}
                 className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/[0.04] hover:text-white"
               >
-                Cancel
+                {state.success && shouldStayOpenAfterSuccess ? "Done" : "Cancel"}
               </button>
               <button
                 type="submit"
                 disabled={pending}
                 className="rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {pending ? "Importing..." : "Create model"}
+                {submitLabel}
               </button>
             </div>
           </form>
