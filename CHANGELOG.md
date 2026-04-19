@@ -1,5 +1,18 @@
 # Changelog
 
+## v4.0.10 - Unreleased
+
+### Added
+
+- Settings control for locking the app automatically after a chosen period of inactivity
+- Idle lock status messaging on the login page so users know why the app returned to login
+
+### Changed
+
+- App shell now watches for inactivity and triggers the existing safe logout flow instead of silently leaving sessions open
+- Idle activity is shared across open tabs so one active tab keeps the app unlocked
+- App branding now reflects the v4.0.10 release
+
 ## v4.0.9 - Unreleased
 
 ### Added
@@ -10,7 +23,6 @@
 
 - Model imports now count files before generating thumbnails, so totals appear earlier and progress starts sooner
 - The Models page and cards now show when an import is still discovering files instead of pretending nothing is happening
-- App branding now reflects the v4.0.9 release
 
 ## v4.0.8 - Unreleased
 

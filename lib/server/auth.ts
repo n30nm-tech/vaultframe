@@ -13,12 +13,21 @@ type StoredPasswordRecord = {
   updatedAt: string;
 };
 
+type StoredAuthSettingsRecord = {
+  idleTimeoutMinutes: number | null;
+  updatedAt: string;
+};
+
 function getAuthDataDir() {
   return process.env.APP_DATA_DIR || process.env.MEDIA_DATA_DIR || "/opt/vaultframe-data";
 }
 
 function getPasswordFilePath() {
   return path.join(getAuthDataDir(), "auth", "password.json");
+}
+
+function getAuthSettingsFilePath() {
+  return path.join(getAuthDataDir(), "auth", "settings.json");
 }
 
 function getRecoveryPassword() {
@@ -29,6 +38,15 @@ async function readStoredPasswordRecord(): Promise<StoredPasswordRecord | null> 
   try {
     const content = await readFile(getPasswordFilePath(), "utf8");
     return JSON.parse(content) as StoredPasswordRecord;
+  } catch {
+    return null;
+  }
+}
+
+async function readStoredAuthSettingsRecord(): Promise<StoredAuthSettingsRecord | null> {
+  try {
+    const content = await readFile(getAuthSettingsFilePath(), "utf8");
+    return JSON.parse(content) as StoredAuthSettingsRecord;
   } catch {
     return null;
   }
@@ -100,7 +118,10 @@ export async function isAuthEnabled() {
 }
 
 export async function getAuthOverview() {
-  const storedRecord = await readStoredPasswordRecord();
+  const [storedRecord, authSettings] = await Promise.all([
+    readStoredPasswordRecord(),
+    readStoredAuthSettingsRecord(),
+  ]);
   const recoveryPasswordSet = Boolean(getRecoveryPassword());
 
   return {
@@ -108,6 +129,7 @@ export async function getAuthOverview() {
     hasSavedPassword: Boolean(storedRecord),
     recoveryPasswordSet,
     passwordFilePath: getPasswordFilePath(),
+    idleTimeoutMinutes: authSettings?.idleTimeoutMinutes ?? null,
   };
 }
 
@@ -191,6 +213,32 @@ export async function storeNewPassword(password: string) {
         passwordSalt,
         updatedAt: new Date().toISOString(),
       } satisfies StoredPasswordRecord,
+      null,
+      2,
+    ),
+    "utf8",
+  );
+}
+
+export async function storeAuthSettings(input: {
+  idleTimeoutMinutes: number | null;
+}) {
+  const idleTimeoutMinutes =
+    input.idleTimeoutMinutes === null
+      ? null
+      : Number.isFinite(input.idleTimeoutMinutes) && input.idleTimeoutMinutes > 0
+        ? Math.floor(input.idleTimeoutMinutes)
+        : null;
+
+  const filePath = getAuthSettingsFilePath();
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(
+    filePath,
+    JSON.stringify(
+      {
+        idleTimeoutMinutes,
+        updatedAt: new Date().toISOString(),
+      } satisfies StoredAuthSettingsRecord,
       null,
       2,
     ),

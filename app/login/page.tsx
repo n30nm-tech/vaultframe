@@ -6,6 +6,7 @@ type LoginPageProps = {
   searchParams?: Promise<{
     returnTo?: string;
     error?: string;
+    locked?: string;
   }>;
 };
 
@@ -20,7 +21,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <div className="mx-auto flex min-h-screen max-w-xl items-center px-4 py-10 sm:px-6">
       <LoginForm
         returnTo={params?.returnTo ?? "/"}
-        error={params?.error === "invalid" ? "That password was not accepted." : undefined}
+        error={
+          params?.error === "invalid"
+            ? "That password was not accepted."
+            : params?.locked === "idle"
+              ? "VaultFrame locked itself after inactivity."
+              : undefined
+        }
       />
     </div>
   );

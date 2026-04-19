@@ -18,7 +18,12 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppShell authEnabled={authOverview.enabled}>{children}</AppShell>
+        <AppShell
+          authEnabled={authOverview.enabled}
+          idleTimeoutMinutes={authOverview.idleTimeoutMinutes}
+        >
+          {children}
+        </AppShell>
       </body>
     </html>
   );

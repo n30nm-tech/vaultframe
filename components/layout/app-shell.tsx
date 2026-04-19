@@ -11,8 +11,10 @@ import { navigationItems } from "@/lib/navigation";
 export function AppShell({
   children,
   authEnabled,
+  idleTimeoutMinutes,
 }: PropsWithChildren<{
   authEnabled: boolean;
+  idleTimeoutMinutes: number | null;
 }>) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -49,6 +51,80 @@ export function AppShell({
     };
   }, [panicArmed]);
 
+  useEffect(() => {
+    if (!authEnabled || !idleTimeoutMinutes || pathname === "/login") {
+      return;
+    }
+
+    const timeoutMs = idleTimeoutMinutes * 60 * 1000;
+    const storageKey = "vaultframe-last-activity-at";
+    let logoutTimer: number | null = null;
+
+    const getLastActivity = () => {
+      const stored = window.localStorage.getItem(storageKey);
+      const parsed = stored ? Number(stored) : Date.now();
+      return Number.isFinite(parsed) ? parsed : Date.now();
+    };
+
+    const scheduleLogout = () => {
+      if (logoutTimer) {
+        window.clearTimeout(logoutTimer);
+      }
+
+      const msRemaining = timeoutMs - (Date.now() - getLastActivity());
+
+      if (msRemaining <= 0) {
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        window.location.href = `/api/auth/logout?reason=idle&returnTo=${encodeURIComponent(returnTo)}`;
+        return;
+      }
+
+      logoutTimer = window.setTimeout(() => {
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        window.location.href = `/api/auth/logout?reason=idle&returnTo=${encodeURIComponent(returnTo)}`;
+      }, msRemaining);
+    };
+
+    const recordActivity = () => {
+      window.localStorage.setItem(storageKey, String(Date.now()));
+      scheduleLogout();
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === storageKey) {
+        scheduleLogout();
+      }
+    };
+
+    recordActivity();
+
+    const activityEvents: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "mousemove",
+    ];
+
+    for (const eventName of activityEvents) {
+      window.addEventListener(eventName, recordActivity, { passive: true });
+    }
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      if (logoutTimer) {
+        window.clearTimeout(logoutTimer);
+      }
+
+      for (const eventName of activityEvents) {
+        window.removeEventListener(eventName, recordActivity);
+      }
+
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [authEnabled, idleTimeoutMinutes, pathname]);
+
   if (pathname === "/login") {
     return <div className="min-h-screen bg-background bg-hero-glow text-foreground">{children}</div>;
   }
@@ -81,7 +157,7 @@ export function AppShell({
                       VaultFrame control center
                     </h1>
                     <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent sm:text-[11px]">
-                      v4.0.9
+                      v4.0.10
                     </span>
                   </div>
                 </div>
@@ -183,7 +259,7 @@ export function AppShell({
                 <div className="flex items-center gap-2">
                   <p className="text-lg font-semibold tracking-tight text-white">VaultFrame</p>
                   <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-                    v4.0.9
+                    v4.0.10
                   </span>
                 </div>
                 <p className="text-sm text-slate-400">Self-hosted media library</p>
@@ -245,7 +321,7 @@ function ShellNav({ pathname }: { pathname: string }) {
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold tracking-tight">VaultFrame</p>
             <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-              v4.0.9
+              v4.0.10
             </span>
           </div>
           <p className="text-sm text-slate-400">Self-hosted media library</p>
