@@ -165,6 +165,15 @@ export function ModelGallery({ model }: ModelGalleryProps) {
     setPreviewingAssetId((current) => (current === assetId ? null : assetId));
   };
 
+  const handleTileClick = (assetId: string, assetType: "photo" | "video") => {
+    if (assetType === "photo") {
+      setSelectedAssetId(assetId);
+      return;
+    }
+
+    toggleVideoPreview(assetId);
+  };
+
   return (
     <div className="space-y-5">
       <section className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-surface/80 p-5 shadow-panel">
@@ -240,9 +249,18 @@ export function ModelGallery({ model }: ModelGalleryProps) {
               >
                 <div
                   className={clsx(
-                    "relative overflow-hidden bg-[#080b10]",
+                    "relative cursor-pointer overflow-hidden bg-[#080b10]",
                     thumbnailSize === "compact" ? "aspect-[5/6]" : "aspect-[4/5]",
                   )}
+                  onClick={() => handleTileClick(asset.id, asset.assetType)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleTileClick(asset.id, asset.assetType);
+                    }
+                  }}
                 >
                   {isPreviewingVideo ? (
                     <video
@@ -296,7 +314,7 @@ export function ModelGallery({ model }: ModelGalleryProps) {
                         setSelectedAssetId(asset.id);
                       }}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-black/40 text-white transition hover:bg-black/60"
-                      aria-label="Open asset"
+                      aria-label="Open asset fullscreen"
                     >
                       <Expand className="h-4 w-4" />
                     </button>

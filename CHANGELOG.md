@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.0.11 - Unreleased
+
+### Changed
+
+- Model gallery tiles now behave more naturally: photos open large on tile click, while videos preview in place on tile click and keep a dedicated fullscreen/open button
+- App branding now reflects the v4.0.11 release
+
 ## v4.0.10 - Unreleased
 
 ### Added
