@@ -157,7 +157,7 @@ export function AppShell({
                       VaultFrame control center
                     </h1>
                     <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent sm:text-[11px]">
-                      v4.0.11
+                      v4.0.12
                     </span>
                   </div>
                 </div>
@@ -259,7 +259,7 @@ export function AppShell({
                 <div className="flex items-center gap-2">
                   <p className="text-lg font-semibold tracking-tight text-white">VaultFrame</p>
                   <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-                    v4.0.11
+                    v4.0.12
                   </span>
                 </div>
                 <p className="text-sm text-slate-400">Self-hosted media library</p>
@@ -321,7 +321,7 @@ function ShellNav({ pathname }: { pathname: string }) {
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold tracking-tight">VaultFrame</p>
             <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-              v4.0.11
+              v4.0.12
             </span>
           </div>
           <p className="text-sm text-slate-400">Self-hosted media library</p>

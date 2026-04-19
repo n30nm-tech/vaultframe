@@ -1,5 +1,16 @@
 # Changelog
 
+## v4.0.12 - Unreleased
+
+### Added
+
+- Per-model import controls on each individual model page so imports can be rerun without going back to the Models index
+
+### Changed
+
+- Model detail pages now show current import status, progress counts, and stop/re-run controls alongside the gallery
+- App branding now reflects the v4.0.12 release
+
 ## v4.0.11 - Unreleased
 
 ### Changed

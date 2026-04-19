@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { ModelGallery } from "@/components/models/model-gallery";
+import { ModelImportControls } from "@/components/models/model-import-controls";
 import { getModelById } from "@/lib/data/models";
 import { requirePageAuth } from "@/lib/server/auth";
+import { ensureModelImportRunnerStarted } from "@/lib/server/model-import";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,7 @@ type ModelDetailPageProps = {
 export default async function ModelDetailPage({ params }: ModelDetailPageProps) {
   const { id } = await params;
   await requirePageAuth(`/models/${id}`);
+  ensureModelImportRunnerStarted();
   const model = await getModelById(id);
 
   if (!model) {
@@ -44,6 +47,8 @@ export default async function ModelDetailPage({ params }: ModelDetailPageProps) 
         <StatCard label="Videos" value={String(model.videoCount)} />
         <StatCard label="Folders" value={String(model.folderCount)} />
       </section>
+
+      <ModelImportControls model={model} />
 
       <ModelGallery model={model} />
     </div>
