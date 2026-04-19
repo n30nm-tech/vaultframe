@@ -6,6 +6,7 @@ import {
   upsertModelAsset,
 } from "@/lib/data/models";
 import { getDirectoryAvailability, validateLibraryPath } from "@/lib/server/folder-browser";
+import { ensureThumbnailForVideo } from "@/lib/server/thumbnails";
 
 const MODEL_IMPORT_RUNNER_INTERVAL_MS = 2000;
 const MODEL_IMPORT_PROGRESS_INTERVAL_MS = 1500;
@@ -216,6 +217,11 @@ async function importModelById(modelId: string) {
   const now = new Date();
   const discoveredAssets = await collectModelAssets(validatedPath, now, {
     shouldAbort: () => isModelImportCancellationRequested(modelId),
+    onProgressPath: async (currentPath) => {
+      await updateModelImportState(modelId, {
+        importCurrentPath: currentPath,
+      });
+    },
   });
   await updateModelImportState(modelId, {
     importTotalFiles: discoveredAssets.length,
@@ -252,7 +258,15 @@ async function importModelById(modelId: string) {
 
   for (const asset of discoveredAssets) {
     throwIfModelImportCancelled(modelId);
-    await upsertModelAsset(modelId, asset);
+    const assetWithThumbnail =
+      asset.assetType === "VIDEO"
+        ? {
+            ...asset,
+            thumbnailPath: await ensureThumbnailForVideo(asset.fullPath),
+          }
+        : asset;
+
+    await upsertModelAsset(modelId, assetWithThumbnail);
     seenPaths.push(asset.fullPath);
     filesScanned += 1;
 

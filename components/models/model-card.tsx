@@ -24,6 +24,11 @@ export function ModelCard({
   mergePending = false,
   cancelPending = false,
 }: ModelCardProps) {
+  const isDiscoveringFiles =
+    model.importStatus === "RUNNING" &&
+    model.importTotalFiles === 0 &&
+    model.importFilesScanned === 0;
+
   return (
     <article className="overflow-hidden rounded-[28px] border border-white/10 bg-surface/80 shadow-panel">
       <Link href={`/models/${model.id}`} className="block">
@@ -81,7 +86,9 @@ export function ModelCard({
             <div className="flex items-center gap-2 font-medium">
               <LoaderCircle className="h-4 w-4" />
               <span>
-                {model.importStatus === "RUNNING"
+                {isDiscoveringFiles
+                  ? "Discovering files"
+                  : model.importStatus === "RUNNING"
                   ? "Importing now"
                   : model.importStatus === "CANCELLING"
                     ? "Stopping import"
@@ -114,6 +121,12 @@ export function ModelCard({
                 <p className="mt-1 text-base font-semibold text-white">{model.importVideosFound}</p>
               </div>
             </div>
+            {isDiscoveringFiles ? (
+              <p className="mt-3 text-xs text-sky-50/90">
+                Counting supported files before import starts so the progress numbers can be
+                accurate.
+              </p>
+            ) : null}
             {model.importCurrentPath ? (
               <p className="mt-3 break-all text-xs text-sky-50/90">{model.importCurrentPath}</p>
             ) : null}

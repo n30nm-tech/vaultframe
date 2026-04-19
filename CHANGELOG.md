@@ -1,5 +1,17 @@
 # Changelog
 
+## v4.0.9 - Unreleased
+
+### Added
+
+- Clear discovery-stage messaging for model imports so `0 of 0` no longer looks like a frozen job
+
+### Changed
+
+- Model imports now count files before generating thumbnails, so totals appear earlier and progress starts sooner
+- The Models page and cards now show when an import is still discovering files instead of pretending nothing is happening
+- App branding now reflects the v4.0.9 release
+
 ## v4.0.8 - Unreleased
 
 ### Added
@@ -10,7 +22,6 @@
 
 - The model viewer now uses the full phone screen for opened assets instead of a desktop-style modal stack
 - Swipe left and right is now better aligned with the mobile full-screen experience
-- App branding now reflects the v4.0.8 release
 
 ## v4.0.7 - Unreleased
 

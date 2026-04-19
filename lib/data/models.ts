@@ -2,7 +2,6 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { validateLibraryPath, validateMediaFilePath } from "@/lib/server/folder-browser";
-import { ensureThumbnailForVideo } from "@/lib/server/thumbnails";
 
 const PHOTO_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 const VIDEO_EXTENSIONS = new Set([
@@ -589,6 +588,7 @@ export async function collectModelAssets(
   now: Date,
   options?: {
     shouldAbort?: () => boolean | Promise<boolean>;
+    onProgressPath?: (currentPath: string) => void | Promise<void>;
   },
 ) {
   const assets: Array<{
@@ -615,6 +615,8 @@ export async function collectModelAssets(
     if (!currentPath) {
       continue;
     }
+
+    await options?.onProgressPath?.(currentPath);
 
     const entries = await readdir(currentPath, { withFileTypes: true });
 
@@ -650,8 +652,6 @@ export async function collectModelAssets(
       const folderPath = path.dirname(relativePath) === "."
         ? path.basename(rootPath)
         : path.dirname(relativePath);
-      const thumbnailPath =
-        assetType === "VIDEO" ? await ensureThumbnailForVideo(entryPath) : null;
 
       assets.push({
         fullPath: entryPath,
@@ -660,7 +660,7 @@ export async function collectModelAssets(
         fileName: entry.name,
         assetType,
         extension,
-        thumbnailPath,
+        thumbnailPath: null,
         sizeBytes: BigInt(fileStats.size),
         durationSeconds: null,
         lastSeenAt: now,

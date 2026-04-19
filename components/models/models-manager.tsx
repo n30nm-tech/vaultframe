@@ -34,6 +34,10 @@ export function ModelsManager({ models }: ModelsManagerProps) {
   const runningModel = models.find(
     (model) => model.importStatus === "RUNNING" || model.importStatus === "CANCELLING",
   );
+  const runningModelIsDiscovering =
+    runningModel?.importStatus === "RUNNING" &&
+    runningModel.importTotalFiles === 0 &&
+    runningModel.importFilesScanned === 0;
   const queuedCount = models.filter((model) => model.importStatus === "QUEUED").length;
   const failedCount = models.filter((model) => model.importStatus === "FAILED").length;
 
@@ -269,6 +273,8 @@ export function ModelsManager({ models }: ModelsManagerProps) {
               {runningModel
                 ? runningModel.importStatus === "CANCELLING"
                   ? `Stopping ${runningModel.name}`
+                  : runningModelIsDiscovering
+                    ? `Discovering files for ${runningModel.name}`
                   : `Importing ${runningModel.name} right now`
                 : "Model import queue is active"}
             </p>
@@ -276,6 +282,8 @@ export function ModelsManager({ models }: ModelsManagerProps) {
               {runningModel
                 ? runningModel.importStatus === "CANCELLING"
                   ? "The current model import is being stopped safely."
+                  : runningModelIsDiscovering
+                    ? "We’re counting supported files first so the totals are accurate before import progress begins."
                   : `${runningModel.importFilesScanned} of ${runningModel.importTotalFiles} files checked. ${runningModel.importPhotosFound} photos and ${runningModel.importVideosFound} videos imported so far.`
                 : "The next model import will begin automatically."}
               {queuedCount > 0 ? ` ${queuedCount} more model ${queuedCount === 1 ? "is" : "are"} queued behind it.` : ""}
